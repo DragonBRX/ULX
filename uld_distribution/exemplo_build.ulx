@@ -1,0 +1,47 @@
+// ULX Build Example - ULD Distribution
+// Este arquivo demonstra como criar um app distribuivel
+
+// Definir configuracoes do app
+app = {
+    nome: "Calculadora ULX",
+    versao: "1.0.0",
+    autor: "ULX Team"
+}
+
+escreva("=================================")
+escreva("  ULD - Build Example")
+escreva("=================================")
+escreva("")
+escreva("App: " + app.nome)
+escreva("Versao: " + app.versao)
+escreva("")
+
+// Funcao principal
+funcao calcular(a, b, operacao) {
+    se (operacao == "+") {
+        retorna a + b
+    }
+    se (operacao == "-") {
+        retorna a - b
+    }
+    se (operacao == "*") {
+        retorna a * b
+    }
+    se (operacao == "/") {
+        se (b == 0) {
+            escreva("Erro: Divisao por zero!")
+            retorna 0
+        }
+        retorna a / b
+    }
+    escreva("Operacao invalida!")
+    retorna 0
+}
+
+// Calculos de exemplo
+escreva("5 + 3 = " + calcular(5, 3, "+"))
+escreva("10 - 4 = " + calcular(10, 4, "-"))
+escreva("6 * 7 = " + calcular(6, 7, "*"))
+escreva("20 / 4 = " + calcular(20, 4, "/"))
+escreva("")
+escreva("Build concluido!")

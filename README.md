@@ -1,11 +1,11 @@
 # ULX - Universal Language for Everything
 ## Sistema Completo de Desenvolvimento
 
-O ecossistema **ULX** é composto por **quatro bases** que trabalham em conjunto:
+O ecossistema **ULX** é composto por **cinco bases** que trabalham em conjunto:
 
 ---
 
-## 🏗️ AS QUATRO BASES
+## 🏗️ AS CINCO BASES
 
 ### 1️⃣ ULX - Universal Language (Linguagem de Programação)
 
@@ -81,6 +81,38 @@ Interface JSON otimizada para **Inteligências Artificias**.
 
 ---
 
+### 5️⃣ ULD - Universal Language Distribution (Distribuição) ⭐ NOVO
+
+Sistema de **build e distribuição** que gera executáveis nativos para qualquer plataforma.
+
+**Arquivos:** `.uld` (configuração de build)
+
+```bash
+# Gerar executavel Windows
+uld-builder -i app.ulx -o app.exe --target windows
+
+# Gerar executavel Linux
+uld-builder -i app.ulx -o app --target linux
+
+# Gerar app Android
+uld-builder -i app.ulx -o app.apk --target android
+
+# Gerar pagina web
+uld-builder -i app.ulx -o app.html --target web
+```
+
+**Formatos suportados:**
+
+| Plataforma | Formato | Status |
+|------------|---------|--------|
+| Windows | `.exe` | Estável |
+| Linux | `bin` | Estável |
+| macOS | `.app` | Beta |
+| Android | `.apk` | Experimental |
+| Web | `.html` | Estável |
+
+---
+
 ## 🔄 FLUXO DE TRABALHO
 
 ```
@@ -128,10 +160,20 @@ Interface JSON otimizada para **Inteligências Artificias**.
                CLX Compiler (ULX → C)
                            │
                            ▼
-               GCC/Clang (C → Binário)
-                           │
-                           ▼
-                   Binário Nativo
+┌─────────────────────────────────────────────────────────┐
+│                   ULD (Distribuição)                    │
+│  +----------------------------------------------------│
+│  │ uld-builder -i app.ulx -o app.exe --target windows││
+│  │ uld-builder -i app.ulx -o app.apk --target android││
+│  │ uld-builder -i app.ulx -o app.html --target web   ││
+│  +----------------------------------------------------│
+│                      │                                 │
+│                      ▼                                 │
+│  ┌───────────────────────────────────────────────────┐ │
+│  │              Executáveis Nativos                   │ │
+│  │   .exe    .apk    .app    .html    bin           │ │
+│  └───────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -156,6 +198,12 @@ ULX/
 ├── ulq_intelligence/       # Interface para IAs ⭐
 │   ├── ulq_parser.py
 │   ├── exemplo_calculadora.ulq
+│   └── README.md
+│
+├── uld_distribution/       # Sistema de distribuição ⭐ NOVO
+│   ├── uld_builder.py
+│   ├── exemplo_build.ulx
+│   ├── exemplo_build.uld
 │   └── README.md
 │
 └── README.md
@@ -194,6 +242,22 @@ janela["children"].append(parser.create_text("Olá, IA!"))
 # Validar e converter para ULX
 if parser.validate(janela):
     ulx_code = parser.to_ulx(janela)
+```
+
+### ULD - Gerar Executáveis
+
+```bash
+# Windows (.exe)
+python3 uld_distribution/uld_builder.py -i app.ulx -o app.exe --target windows
+
+# Linux (binário)
+python3 uld_distribution/uld_builder.py -i app.ulx -o app --target linux
+
+# Android (.apk)
+python3 uld_distribution/uld_builder.py -i app.ulx -o app.apk --target android
+
+# Web (.html)
+python3 uld_distribution/uld_builder.py -i app.ulx -o app.html --target web
 ```
 
 ---
