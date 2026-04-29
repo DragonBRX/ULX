@@ -1,0 +1,144 @@
+{
+    "project": "calculadora",
+    "version": "1.0",
+    "description": "Calculadora ULX - Exemplo ULQ para IAs",
+    "type": "window",
+    "name": "calculadora",
+    "title": "Calculadora ULX",
+    "width": 320,
+    "height": 400,
+    "children": [
+        {
+            "type": "heading",
+            "content": "Calculadora ULX",
+            "level": 1,
+            "style": {
+                "font_size": 24,
+                "text_align": "center",
+                "color": "#333333"
+            }
+        },
+        {
+            "type": "text",
+            "content": "Operação matemática simples",
+            "style": {
+                "font_size": 14,
+                "text_align": "center",
+                "color": "#666666"
+            }
+        },
+        {
+            "type": "input",
+            "name": "numero_a",
+            "label": "Número A",
+            "placeholder": "Digite um número",
+            "style": {
+                "width": "100%",
+                "padding": "10px",
+                "margin": "10px 0"
+            }
+        },
+        {
+            "type": "input",
+            "name": "numero_b",
+            "label": "Número B",
+            "placeholder": "Digite outro número",
+            "style": {
+                "width": "100%",
+                "padding": "10px",
+                "margin": "10px 0"
+            }
+        },
+        {
+            "type": "grid",
+            "columns": 4,
+            "rows": 2,
+            "gap": 5,
+            "children": [
+                {
+                    "type": "button",
+                    "text": "+",
+                    "action": "operacao_somar",
+                    "style": {
+                        "background": "#ff9500",
+                        "color": "#ffffff",
+                        "padding": "15px",
+                        "font_size": 20
+                    }
+                },
+                {
+                    "type": "button",
+                    "text": "-",
+                    "action": "operacao_subtrair",
+                    "style": {
+                        "background": "#ff9500",
+                        "color": "#ffffff",
+                        "padding": "15px",
+                        "font_size": 20
+                    }
+                },
+                {
+                    "type": "button",
+                    "text": "*",
+                    "action": "operacao_multiplicar",
+                    "style": {
+                        "background": "#ff9500",
+                        "color": "#ffffff",
+                        "padding": "15px",
+                        "font_size": 20
+                    }
+                },
+                {
+                    "type": "button",
+                    "text": "/",
+                    "action": "operacao_dividir",
+                    "style": {
+                        "background": "#ff9500",
+                        "color": "#ffffff",
+                        "padding": "15px",
+                        "font_size": 20
+                    }
+                }
+            ]
+        },
+        {
+            "type": "text",
+            "name": "resultado_label",
+            "content": "Resultado:",
+            "style": {
+                "font_size": 18,
+                "font_weight": "bold",
+                "margin_top": 20
+            }
+        },
+        {
+            "type": "text",
+            "name": "resultado",
+            "content": "0",
+            "style": {
+                "font_size": 32,
+                "text_align": "center",
+                "color": "#007bff",
+                "font_weight": "bold"
+            }
+        }
+    ],
+    "logic": {
+        "operacao_somar": "resultado = numero_a + numero_b",
+        "operacao_subtrair": "resultado = numero_a - numero_b",
+        "operacao_multiplicar": "resultado = numero_a * numero_b",
+        "operacao_dividir": "resultado = numero_a / numero_b"
+    },
+    "style": {
+        "background": "#ffffff",
+        "padding": 20,
+        "border_radius": 10,
+        "box_shadow": "0 2px 10px rgba(0,0,0,0.1)"
+    },
+    "ai_metadata": {
+        "created_by": "AI Assistant",
+        "model": "ULQ-v1",
+        "optimized": true,
+        "tokens_estimate": 150
+    }
+}

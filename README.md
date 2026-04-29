@@ -1,11 +1,11 @@
 # ULX - Universal Language for Everything
 ## Sistema Completo de Desenvolvimento
 
-O ecossistema **ULX** é composto por três bases fundamentais que trabalham em conjunto:
+O ecossistema **ULX** é composto por **quatro bases** que trabalham em conjunto:
 
 ---
 
-## 🏗️ AS TRÊS BASES
+## 🏗️ AS QUATRO BASES
 
 ### 1️⃣ ULX - Universal Language (Linguagem de Programação)
 
@@ -24,12 +24,6 @@ resultado = soma(10, 20)
 escreva("Resultado:", resultado)
 ```
 
-**Características:**
-- Sintaxe em português
-- Tipagem dinâmica
-- Funções de primeira classe
-- Arrays e dicionários nativos
-
 ---
 
 ### 2️⃣ ULV - Universal Language Visual (Linguagem Visual)
@@ -44,22 +38,9 @@ janela("Minha App") {
     tamanho: 400x300
 
     texto("Olá, Mundo!")
-        posicao: centro
-        cor: azul
-
     botao("Clique Aqui")
-        posicao: centro
-        cor: verde
-        acao: clique()
 }
 ```
-
-**Características:**
-- WYSIWYG (O que você vê é o que você executa)
-- Drag & Drop de componentes
-- Prévia em tempo real
-- Mesma base que ULX
-- Compila para ULX automaticamente
 
 ---
 
@@ -67,17 +48,36 @@ janela("Minha App") {
 
 Compilador universal que processa ULX e ULV.
 
-**Uso:**
 ```bash
-# Compila ULX
 clx-compile programa.ulx -o app
-
-# Compila ULV
 clx-compile interface.ulv -o app
-
-# Apenas gera C
-clx-compile programa.ulx --c-only
 ```
+
+---
+
+### 4️⃣ ULQ - Universal Language for Intelligence (Interface para IAs) ⭐ NOVO
+
+Interface JSON otimizada para **Inteligências Artificias**.
+
+**Arquivos:** `.ulq` (JSON)
+
+```json
+{
+    "type": "window",
+    "name": "App",
+    "children": [
+        {"type": "text", "content": "Olá, IA!"},
+        {"type": "button", "text": "Click", "action": "onClick"}
+    ]
+}
+```
+
+**Características:**
+- Formato JSON padronizado
+- Otimizado para IAs (Claude, GPT, Gemini, Llama, etc.)
+- Zero erros de sintaxe
+- Validação automática
+- Conversão direta para ULX/ULV
 
 ---
 
@@ -85,37 +85,53 @@ clx-compile programa.ulx --c-only
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    ULV (Visual)                        │
+│                   ULQ (Para IAs)                       │
 │  +----------------------------------------------------│
-│  │ janela("App") {                                    ││
+│  │ {                                                    ││
+│  │   "type": "window",                                 ││
+│  │   "children": [...]                                ││
+│  │ }                                                    ││
+│  +----------------------------------------------------│
+│                      │                                 │
+│                      ▼                                 │
+│  ┌───────────────────────────────────────────────────┐ │
+│  │           CLX Compiler (ULQ → ULX)                │ │
+│  └───────────────────────────────────────────────────┘ │
+└──────────────────────────┼──────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│                   ULV (Visual)                          │
+│  +----------------------------------------------------│
+│  │ janela("App") {                                     ││
 │  │     texto("Olá")                                    ││
 │  │     botao("Click")                                  ││
 │  │ }                                                   ││
 │  +----------------------------------------------------│
-│                         │                              │
-│                         ▼                              │
-│               CLX Compiler (ULV → ULX)                 │
-│                         │                              │
-└─────────────────────────┼───────────────────────────────┘
-                          │
-                          ▼
+│                      │                                 │
+│                      ▼                                 │
+│  ┌───────────────────────────────────────────────────┐ │
+│  │           CLX Compiler (ULV → ULX)                │ │
+│  └───────────────────────────────────────────────────┘ │
+└──────────────────────────┼──────────────────────────────┘
+                           │
+                           ▼
 ┌─────────────────────────────────────────────────────────┐
-│                    ULX (Código)                         │
+│                   ULX (Código)                         │
 │  +----------------------------------------------------│
-│  │ escreva("Olá")                                      ││
-│  │ botao("Click", acao: clique)                        ││
+│  │ escreva("Olá")                                     ││
+│  │ botao("Click")                                     ││
 │  +----------------------------------------------------│
-│                         │                              │
-└─────────────────────────┼───────────────────────────────┘
-                          │
-                          ▼
-              CLX Compiler (ULX → C)
-                          │
-                          ▼
-              GCC/Clang (C → Binário)
-                          │
-                          ▼
-                  Binário Nativo
+└──────────────────────────┼──────────────────────────────┘
+                           │
+                           ▼
+               CLX Compiler (ULX → C)
+                           │
+                           ▼
+               GCC/Clang (C → Binário)
+                           │
+                           ▼
+                   Binário Nativo
 ```
 
 ---
@@ -137,9 +153,10 @@ ULX/
 │   ├── clx_compiler.py
 │   └── README.md
 │
-├── examples/
-│   ├── games/
-│   └── apps/
+├── ulq_intelligence/       # Interface para IAs ⭐
+│   ├── ulq_parser.py
+│   ├── exemplo_calculadora.ulq
+│   └── README.md
 │
 └── README.md
 ```
@@ -165,19 +182,34 @@ clx-compile hello.ulx -o hello
 ./hello
 ```
 
-### ULV - Interface Visual
+### ULQ - Para IAs
 
-```bash
-cat > minha_app.ulv << 'EOF'
-janela("Minha App") {
-    texto("Olá, Mundo!")
-    botao("Clique Aqui")
-}
-EOF
+```python
+from ulq_intelligence import ULQParser
 
-clx-compile minha_app.ulv -o minha_app
-./minha_app
+parser = ULQParser()
+janela = parser.create_window("Minha App")
+janela["children"].append(parser.create_text("Olá, IA!"))
+
+# Validar e converter para ULX
+if parser.validate(janela):
+    ulx_code = parser.to_ulx(janela)
 ```
+
+---
+
+## 🤖 ULQ PARA INTELIGÊNCIAS ARTIFICIAIS
+
+ULQ foi criado para facilitar o trabalho de IAs:
+
+| Problema | Solução ULQ |
+|----------|-------------|
+| Códigos com erros | JSON estruturado |
+| Ambigüidade | Tipos definidos |
+| IAs não visualizam | Representação visual |
+| Falta de padronização | Schema único |
+
+**ULQ funciona com qualquer IA que processa JSON!**
 
 ---
 
