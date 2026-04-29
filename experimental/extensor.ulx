@@ -418,7 +418,7 @@ escreva("3. Analisa resultado")
 escreva("4. Cria nova habilidade/estratégia")
 escreva("5. Armazena conhecimento")
 escreva("6. Próximo encontro → já sabe")
-escreva("7. ↺ Repete infinitamente")
+escreva("7. Repete infinitamente")
 escreva("")
 
 // ============================================
