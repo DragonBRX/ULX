@@ -5,9 +5,9 @@ O ecossistema **ULX** é composto por **cinco bases** que trabalham em conjunto:
 
 ---
 
-## 🏗️ AS CINCO BASES
+## AS CINCO BASES
 
-### 1️⃣ ULX - Universal Language (Linguagem de Programação)
+### ULX - Universal Language (Linguagem de Programação)
 
 Linguagem de programação em português, fácil e poderosa.
 
@@ -26,7 +26,7 @@ escreva("Resultado:", resultado)
 
 ---
 
-### 2️⃣ ULV - Universal Language Visual (Linguagem Visual)
+### ULV - Universal Language Visual (Linguagem Visual)
 
 Designer visual para criar interfaces, games e apps com drag & drop.
 
@@ -44,7 +44,7 @@ janela("Minha App") {
 
 ---
 
-### 3️⃣ CLX - Compiler & Language eXecutor (Compilador)
+### CLX - Compiler & Language eXecutor (Compilador)
 
 Compilador universal que processa ULX e ULV.
 
@@ -55,7 +55,7 @@ clx-compile interface.ulv -o app
 
 ---
 
-### 4️⃣ ULQ - Universal Language for Intelligence (Interface para IAs) ⭐ NOVO
+### ULQ - Universal Language for Intelligence (Interface para IAs) ⭐ NOVO
 
 Interface JSON otimizada para **Inteligências Artificias**.
 
@@ -81,7 +81,7 @@ Interface JSON otimizada para **Inteligências Artificias**.
 
 ---
 
-### 5️⃣ ULD - Universal Language Distribution (Distribuição) ⭐ NOVO
+### ULD - Universal Language Distribution (Distribuição)  NOVO
 
 Sistema de **build e distribuição** que gera executáveis nativos para qualquer plataforma.
 
@@ -113,7 +113,7 @@ uld-builder -i app.ulx -o app.html --target web
 
 ---
 
-## 🔄 FLUXO DE TRABALHO
+## FLUXO DE TRABALHO
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -178,7 +178,7 @@ uld-builder -i app.ulx -o app.html --target web
 
 ---
 
-## 📁 ESTRUTURA DO PROJETO
+## ESTRUTURA DO PROJETO
 
 ```
 ULX/
@@ -195,12 +195,12 @@ ULX/
 │   ├── clx_compiler.py
 │   └── README.md
 │
-├── ulq_intelligence/       # Interface para IAs ⭐
+├── ulq_intelligence/       # Interface para IAs
 │   ├── ulq_parser.py
 │   ├── exemplo_calculadora.ulq
 │   └── README.md
 │
-├── uld_distribution/       # Sistema de distribuição ⭐ NOVO
+├── uld_distribution/       # Sistema de distribuição NOVO
 │   ├── uld_builder.py
 │   ├── exemplo_build.ulx
 │   ├── exemplo_build.uld
@@ -211,7 +211,7 @@ ULX/
 
 ---
 
-## 🚀 COMO COMEÇAR
+## COMO COMEÇAR
 
 ### Instalação
 
@@ -262,7 +262,7 @@ python3 uld_distribution/uld_builder.py -i app.ulx -o app.html --target web
 
 ---
 
-## 🤖 ULQ PARA INTELIGÊNCIAS ARTIFICIAIS
+## ULQ PARA INTELIGÊNCIAS ARTIFICIAIS
 
 ULQ foi criado para facilitar o trabalho de IAs:
 
@@ -277,7 +277,7 @@ ULQ foi criado para facilitar o trabalho de IAs:
 
 ---
 
-## 📄 LICENÇA
+## LICENÇA
 
 MIT License
 
