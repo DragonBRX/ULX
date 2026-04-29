@@ -1,0 +1,334 @@
+// CLX Bootstrap Compiler - ULX v3.0
+// Este é o compilador ULX escrito em ULX!
+// Ele compila código ULX para C
+
+escreva("CLX Bootstrap Compiler - ULX v3.0")
+escreva("==================================")
+
+// ========== ANALISADOR LÉXICO ==========
+
+funcao e_digito(c) {
+    retorna (c >= "0") && (c <= "9")
+}
+
+funcao e_letra(c) {
+    chars = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+             "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+             "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+             "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "_"]
+    i = 0
+    enquanto (i < tamanho(chars)) {
+        se (chars[i] == c) {
+            retorna verdadeiro
+        }
+        i = i + 1
+    }
+    retorna falso
+}
+
+funcao e_whitespace(c) {
+    retorna (c == " ") || (c == "\t") || (c == "\n") || (c == "\r")
+}
+
+funcao pegar_token(codigo, pos) {
+    enquanto (pos < tamanho(codigo) && e_whitespace(pegar_char(codigo, pos))) {
+        pos = pos + 1
+    }
+
+    se (pos >= tamanho(codigo)) {
+        retorna {"tipo": "EOF", "valor": "", "pos": pos}
+    }
+
+    c = pegar_char(codigo, pos)
+
+    // Números
+    se (e_digito(c)) {
+        inicio = pos
+        enquanto (pos < tamanho(codigo) && e_digito(pegar_char(codigo, pos))) {
+            pos = pos + 1
+        }
+        se (pegar_char(codigo, pos) == ".") {
+            pos = pos + 1
+            enquanto (pos < tamanho(codigo) && e_digito(pegar_char(codigo, pos))) {
+                pos = pos + 1
+            }
+        }
+        valor = substring(codigo, inicio, pos)
+        retorna {"tipo": "NUMERO", "valor": valor, "pos": pos}
+    }
+
+    // Strings
+    se (c == "\"") {
+        pos = pos + 1
+        inicio = pos
+        enquanto (pos < tamanho(codigo) && pegar_char(codigo, pos) != "\"") {
+            pos = pos + 1
+        }
+        valor = substring(codigo, inicio, pos)
+        pos = pos + 1
+        retorna {"tipo": "STRING", "valor": valor, "pos": pos}
+    }
+
+    // Identificadores e palavras-chave
+    se (e_letra(c)) {
+        inicio = pos
+        enquanto (pos < tamanho(codigo) && e_letra(pegar_char(codigo, pos)) || e_digito(pegar_char(codigo, pos))) {
+            pos = pos + 1
+        }
+        valor = substring(codigo, inicio, pos)
+
+        // Palavras-chave
+        palavras = ["escreva", "leia", "se", "senao", "enquanto", "para",
+                   "funcao", "retorna", "verdadeiro", "falso", "nulo", "pare", "continua"]
+        i = 0
+        enquanto (i < tamanho(palavras)) {
+            se (valor == palavras[i]) {
+                retorna {"tipo": valor, "valor": valor, "pos": pos}
+            }
+            i = i + 1
+        }
+        retorna {"tipo": "IDENT", "valor": valor, "pos": pos}
+    }
+
+    // Operadores
+    se (c == "+") {
+        pos = pos + 1
+        retorna {"tipo": "PLUS", "valor": "+", "pos": pos}
+    }
+    se (c == "-") {
+        pos = pos + 1
+        retorna {"tipo": "MINUS", "valor": "-", "pos": pos}
+    }
+    se (c == "*") {
+        pos = pos + 1
+        retorna {"tipo": "MULT", "valor": "*", "pos": pos}
+    }
+    se (c == "/") {
+        pos = pos + 1
+        retorna {"tipo": "DIV", "valor": "/", "pos": pos}
+    }
+    se (c == "=") {
+        pos = pos + 1
+        se (pegar_char(codigo, pos) == "=") {
+            pos = pos + 1
+            retorna {"tipo": "EQ", "valor": "==", "pos": pos}
+        }
+        retorna {"tipo": "ASSIGN", "valor": "=", "pos": pos}
+    }
+    se (c == "!") {
+        pos = pos + 1
+        se (pegar_char(codigo, pos) == "=") {
+            pos = pos + 1
+            retorna {"tipo": "NEQ", "valor": "!=", "pos": pos}
+        }
+    }
+    se (c == "<") {
+        pos = pos + 1
+        se (pegar_char(codigo, pos) == "=") {
+            pos = pos + 1
+            retorna {"tipo": "LTE", "valor": "<=", "pos": pos}
+        }
+        retorna {"tipo": "LT", "valor": "<", "pos": pos}
+    }
+    se (c == ">") {
+        pos = pos + 1
+        se (pegar_char(codigo, pos) == "=") {
+            pos = pos + 1
+            retorna {"tipo": "GTE", "valor": ">=", "pos": pos}
+        }
+        retorna {"tipo": "GT", "valor": ">", "pos": pos}
+    }
+    se (c == "&") {
+        pos = pos + 1
+        se (pegar_char(codigo, pos) == "&") {
+            pos = pos + 1
+            retorna {"tipo": "AND", "valor": "&&", "pos": pos}
+        }
+    }
+    se (c == "|") {
+        pos = pos + 1
+        se (pegar_char(codigo, pos) == "|") {
+            pos = pos + 1
+            retorna {"tipo": "OR", "valor": "||", "pos": pos}
+        }
+    }
+    se (c == "(") {
+        pos = pos + 1
+        retorna {"tipo": "LPAREN", "valor": "(", "pos": pos}
+    }
+    se (c == ")") {
+        pos = pos + 1
+        retorna {"tipo": "RPAREN", "valor": ")", "pos": pos}
+    }
+    se (c == "{") {
+        pos = pos + 1
+        retorna {"tipo": "LBRACE", "valor": "{", "pos": pos}
+    }
+    se (c == "}") {
+        pos = pos + 1
+        retorna {"tipo": "RBRACE", "valor": "}", "pos": pos}
+    }
+    se (c == ",") {
+        pos = pos + 1
+        retorna {"tipo": "COMMA", "valor": ",", "pos": pos}
+    }
+    se (c == ";") {
+        pos = pos + 1
+        retorna {"tipo": "SEMI", "valor": ";", "pos": pos}
+    }
+
+    pos = pos + 1
+    retorna {"tipo": "UNKNOWN", "valor": c, "pos": pos}
+}
+
+funcao pegar_char(texto, pos) {
+    se (pos < tamanho(texto)) {
+        retorna substring(texto, pos, pos + 1)
+    }
+    retorna ""
+}
+
+funcao tokenizar(codigo) {
+    tokens = []
+    pos = 0
+
+    enquanto (pos < tamanho(codigo)) {
+        token = pegar_token(codigo, pos)
+        pos = token["pos"]
+
+        se (token["tipo"] != "EOF") {
+            tokens[ tamanho(tokens) ] = token
+        }
+    }
+
+    retorna tokens
+}
+
+// ========== GERADOR DE C ==========
+
+funcao gerar_c(tokens) {
+    codigo_c = []
+
+    // Headers
+    codigo_c = adicionar_linha(codigo_c, "#include <stdio.h>")
+    codigo_c = adicionar_linha(codigo_c, "#include <stdlib.h>")
+    codigo_c = adicionar_linha(codigo_c, "#include <string.h>")
+    codigo_c = adicionar_linha(codigo_c, "#include <math.h>")
+    codigo_c = adicionar_linha(codigo_c, "")
+    codigo_c = adicionar_linha(codigo_c, "int main() {")
+
+    i = 0
+    enquanto (i < tamanho(tokens)) {
+        token = tokens[i]
+        tipo = token["tipo"]
+
+        se (tipo == "escreva") {
+            // Pegar argumentos entre parênteses
+            i = i + 1
+            args = []
+
+            se (tokens[i]["tipo"] == "LPAREN") {
+                i = i + 1
+                enquanto (tokens[i]["tipo"] != "RPAREN") {
+                    se (tokens[i]["tipo"] == "STRING") {
+                        args[ tamanho(args) ] = tokens[i]["valor"]
+                    }
+                    i = i + 1
+                }
+            }
+
+            j = 0
+            enquanto (j < tamanho(args)) {
+                codigo_c = adicionar_linha(codigo_c, "printf(\"" + args[j] + "\\n\");")
+                j = j + 1
+            }
+        }
+
+        se (tipo == "IDENT") {
+            nome = token["valor"]
+            i = i + 1
+
+            se (tokens[i]["tipo"] == "ASSIGN") {
+                i = i + 1
+                valor = ""
+
+                enquanto (i < tamanho(tokens) && tokens[i]["tipo"] != "SEMI") {
+                    tv = tokens[i]["valor"]
+                    se (tokens[i]["tipo"] == "STRING") {
+                        valor = valor + tv
+                    } senao se (tokens[i]["tipo"] == "NUMERO") {
+                        valor = valor + tv
+                    } senao se (tokens[i]["tipo"] == "IDENT") {
+                        valor = valor + tv
+                    } senao {
+                        valor = valor + " " + tv + " "
+                    }
+                    i = i + 1
+                }
+
+                codigo_c = adicionar_linha(codigo_c, "char* " + nome + " = \"" + valor + "\";")
+            }
+        }
+
+        i = i + 1
+    }
+
+    codigo_c = adicionar_linha(codigo_c, "return 0;")
+    codigo_c = adicionar_linha(codigo_c, "}")
+
+    retorna join(codigo_c, "\n")
+}
+
+funcao adicionar_linha(lista, texto) {
+    lista[ tamanho(lista) ] = texto
+    retorna lista
+}
+
+funcao substring(texto, inicio, fim) {
+    // Implementação simples de substring
+    resultado = ""
+    i = inicio
+    enquanto (i < fim && i < tamanho(texto)) {
+        resultado = resultado + substring(texto, i, i + 1)
+        i = i + 1
+    }
+    retorna resultado
+}
+
+funcao join(lista, separador) {
+    resultado = ""
+    i = 0
+    enquanto (i < tamanho(lista)) {
+        se (i > 0) {
+            resultado = resultado + separador
+        }
+        resultado = resultado + lista[i]
+        i = i + 1
+    }
+    retorna resultado
+}
+
+funcao tamanho(texto) {
+    // Conta caracteres
+    i = 0
+    enquanto (i < 10000) {
+        se (substring(texto, i, i + 1) == "") {
+            retorna i
+        }
+        i = i + 1
+    }
+    retorna i
+}
+
+// ========== PROGRAMA PRINCIPAL ==========
+
+escreva("")
+escreva("Compilador ULX escrito em ULX!")
+escreva("Este compilador demonstra que ULX pode se auto-compilar.")
+escreva("")
+escreva("Para compilar este arquivo, use:")
+escreva("  python3 compiler/clx_compiler.py compiler/clx_bootstrap.ulx")
+escreva("")
+escreva("Depois de compilado, você pode usar o binário")
+escreva("para compilar outros arquivos ULX!")
+escreva("")

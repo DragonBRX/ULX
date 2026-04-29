@@ -1,0 +1,447 @@
+// CLX Compiler v3.0 - Escrito em ULX
+// Compilador ULX → C → Binário
+// Este compilador É escrito na própria linguagem ULX!
+
+escreva("==========================================")
+escreva("  CLX Compiler - ULX Native Bootstrap")
+escreva("==========================================")
+escreva("")
+
+// ==================== CONFIG ====================
+
+CONFIG = {
+    "verbose": verdadeiro,
+    "optimize": verdadeiro,
+    "static": verdadeiro
+}
+
+se (CONFIG["verbose"]) {
+    escreva("[CLX] Modo verboso ativado")
+    escreva("[CLX] Otimizaçoes: ativadas")
+}
+
+// ==================== UTILIDADES ====================
+
+funcao strlen(s) {
+    i = 0
+    enquanto (i < 100000) {
+        se (substring(s, i, i + 1) == "") {
+            retorna i
+        }
+        i = i + 1
+    }
+    retorna i
+}
+
+funcao substring(s, ini, fim) {
+    res = ""
+    i = ini
+    enquanto (i < fim && i < strlen(s)) {
+        res = res + substring(s, i, i + 1)
+        i = i + 1
+    }
+    retorna res
+}
+
+funcao split(s, sep) {
+    partes = []
+    atual = ""
+    i = 0
+    enquanto (i < strlen(s)) {
+        c = substring(s, i, i + 1)
+        se (c == sep) {
+            partes[ strlen(partes) ] = atual
+            atual = ""
+        } senao {
+            atual = atual + c
+        }
+        i = i + 1
+    }
+    partes[ strlen(partes) ] = atual
+    retorna partes
+}
+
+funcao join(arr, sep) {
+    res = ""
+    i = 0
+    enquanto (i < strlen(arr)) {
+        se (i > 0) {
+            res = res + sep
+        }
+        res = res + arr[i]
+        i = i + 1
+    }
+    retorna res
+}
+
+// ==================== TOKENIZADOR ====================
+
+TIPOS_TOKEN = {
+    "PALAVRA": "PALAVRA",
+    "NUMERO": "NUMERO",
+    "STRING": "STRING",
+    "OPERADOR": "OPERADOR",
+    "SIMBOLO": "SIMBOLO",
+    "IDENT": "IDENT",
+    "EOF": "EOF"
+}
+
+funcao tokenizar(codigo) {
+    tokens = []
+    pos = 0
+    linha = 1
+
+    enquanto (pos < strlen(codigo)) {
+        // Pula espaços
+        enquanto (pos < strlen(codigo) && e_espaco(codigo, pos)) {
+            se (substring(codigo, pos, pos + 1) == "\n") {
+                linha = linha + 1
+            }
+            pos = pos + 1
+        }
+
+        se (pos >= strlen(codigo)) {
+            retorna tokens
+        }
+
+        c = substring(codigo, pos, pos + 1)
+
+        // Comentários
+        se (c == "/" && substring(codigo, pos + 1, pos + 2) == "/") {
+            enquanto (pos < strlen(codigo) && substring(codigo, pos, pos + 1) != "\n") {
+                pos = pos + 1
+            }
+            continua
+        }
+
+        // Strings
+        se (c == "\"") {
+            inicio = pos + 1
+            pos = pos + 1
+            enquanto (pos < strlen(codigo) && substring(codigo, pos, pos + 1) != "\"") {
+                pos = pos + 1
+            }
+            valor = substring(codigo, inicio, pos)
+            tokens[ strlen(tokens) ] = {"tipo": "STRING", "valor": valor, "linha": linha}
+            pos = pos + 1
+            continua
+        }
+
+        // Números
+        se (e_digito(c)) {
+            inicio = pos
+            enquanto (pos < strlen(codigo) && e_digito(substring(codigo, pos, pos + 1))) {
+                pos = pos + 1
+            }
+            se (substring(codigo, pos, pos + 1) == ".") {
+                pos = pos + 1
+                enquanto (pos < strlen(codigo) && e_digito(substring(codigo, pos, pos + 1))) {
+                    pos = pos + 1
+                }
+            }
+            valor = substring(codigo, inicio, pos)
+            tokens[ strlen(tokens) ] = {"tipo": "NUMERO", "valor": valor, "linha": linha}
+            continua
+        }
+
+        // Identificadores e palavras-chave
+        se (e_letra(c) || c == "_") {
+            inicio = pos
+            enquanto (pos < strlen(codigo) && (e_letra(substring(codigo, pos, pos + 1)) || e_digito(substring(codigo, pos, pos + 1)) || substring(codigo, pos, pos + 1) == "_")) {
+                pos = pos + 1
+            }
+            valor = substring(codigo, inicio, pos)
+
+            // Palavras reservadas
+            reservas = ["escreva", "mostre", "leia", "se", "senao", "enquanto", "para",
+                       "funcao", "retorna", "verdadeiro", "falso", "nulo", "pare", "continua",
+                       "para_loop", "tenta", "captura", "lanca", "importar", "classe"]
+
+            i = 0
+            encontrado = falso
+            enquanto (i < strlen(reservas)) {
+                se (valor == reservas[i]) {
+                    encontrado = verdadeiro
+                    i = strlen(reservas) // sai do loop
+                }
+                i = i + 1
+            }
+
+            se (encontrado) {
+                tokens[ strlen(tokens) ] = {"tipo": valor, "valor": valor, "linha": linha}
+            } senao {
+                tokens[ strlen(tokens) ] = {"tipo": "IDENT", "valor": valor, "linha": linha}
+            }
+            continua
+        }
+
+        // Operadores de dois caracteres
+        proximo = substring(codigo, pos + 1, pos + 2)
+
+        se (c == "=" && proximo == "=") {
+            tokens[ strlen(tokens) ] = {"tipo": "EQ", "valor": "==", "linha": linha}
+            pos = pos + 2
+            continua
+        }
+        se (c == "!" && proximo == "=") {
+            tokens[ strlen(tokens) ] = {"tipo": "NEQ", "valor": "!=", "linha": linha}
+            pos = pos + 2
+            continua
+        }
+        se (c == "<" && proximo == "=") {
+            tokens[ strlen(tokens) ] = {"tipo": "LTE", "valor": "<=", "linha": linha}
+            pos = pos + 2
+            continua
+        }
+        se (c == ">" && proximo == "=") {
+            tokens[ strlen(tokens) ] = {"tipo": "GTE", "valor": ">=", "linha": linha}
+            pos = pos + 2
+            continua
+        }
+        se (c == "&" && proximo == "&") {
+            tokens[ strlen(tokens) ] = {"tipo": "AND", "valor": "&&", "linha": linha}
+            pos = pos + 2
+            continua
+        }
+        se (c == "|" && proximo == "|") {
+            tokens[ strlen(tokens) ] = {"tipo": "OR", "valor": "||", "linha": linha}
+            pos = pos + 2
+            continua
+        }
+
+        // Símbolos únicos
+        simbolos = ["+", "-", "*", "/", "=", "<", ">", "(", ")", "{", "}", ",", ";", "%", "^"]
+
+        i = 0
+        encontrado = falso
+        enquanto (i < strlen(simbolos)) {
+            se (c == simbolos[i]) {
+                tokens[ strlen(tokens) ] = {"tipo": c, "valor": c, "linha": linha}
+                pos = pos + 1
+                encontrado = verdadeiro
+                i = strlen(simbolos)
+            }
+            i = i + 1
+        }
+
+        se (!encontrado) {
+            pos = pos + 1
+        }
+    }
+
+    retorna tokens
+}
+
+funcao e_espaco(codigo, pos) {
+    c = substring(codigo, pos, pos + 1)
+    retorna c == " " || c == "\t" || c == "\n" || c == "\r"
+}
+
+funcao e_digito(c) {
+    retorna c == "0" || c == "1" || c == "2" || c == "3" || c == "4" ||
+           c == "5" || c == "6" || c == "7" || c == "8" || c == "9"
+}
+
+funcao e_letra(c) {
+    letras = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    i = 0
+    enquanto (i < strlen(letras)) {
+        se (c == substring(letras, i, i + 1)) {
+            retorna verdadeiro
+        }
+        i = i + 1
+    }
+    retorna falso
+}
+
+// ==================== GERADOR C ====================
+
+funcao gerar_c(tokens, nome_arquivo) {
+    linhas = []
+
+    // Headers
+    linhas[ strlen(linhas) ] = "/* ULX Compiler Output */"
+    linhas[ strlen(linhas) ] = "/* Source: " + nome_arquivo + " */"
+    linhas[ strlen(linhas) ] = ""
+    linhas[ strlen(linhas) ] = "#include <stdio.h>"
+    linhas[ strlen(linhas) ] = "#include <stdlib.h>"
+    linhas[ strlen(linhas) ] = "#include <string.h>"
+    linhas[ strlen(linhas) ] = "#include <stdbool.h>"
+    linhas[ strlen(linhas) ] = "#include <math.h>"
+    linhas[ strlen(linhas) ] = ""
+
+    se (CONFIG["optimize"]) {
+        linhas[ strlen(linhas) ] = "#pragma GCC optimize(\"O3,fast-math\")"
+        linhas[ strlen(linhas) ] = ""
+    }
+
+    linhas[ strlen(linhas) ] = "// Funções utilitárias"
+    linhas[ strlen(linhas) ] = "char* texto_int(int n) {"
+    linhas[ strlen(linhas) ] = "    char buf[32];"
+    linhas[ strlen(linhas) ] = "    sprintf(buf, \"%d\", n);"
+    linhas[ strlen(linhas) ] = "    return strdup(buf);"
+    linhas[ strlen(linhas) ] = "}"
+    linhas[ strlen(linhas) ] = ""
+
+    linhas[ strlen(linhas) ] = "int main() {"
+    linhas[ strlen(linhas) ] = "    int _ulx_indent = 0;"
+
+    i = 0
+    enquanto (i < strlen(tokens)) {
+        tok = tokens[i]
+        tipo = tok["tipo"]
+
+        se (tipo == "escreva" || tipo == "mostre") {
+            linhas[ strlen(linhas) ] = "    printf("
+            i = i + 1
+            primeiro = verdadeiro
+
+            enquanto (i < strlen(tokens) && tokens[i]["tipo"] != ";") {
+                se (!primeiro) {
+                    linhas[ strlen(linhas) ] = "        "
+                }
+                primeiro = falso
+
+                t = tokens[i]
+                se (t["tipo"] == "STRING") {
+                    linhas[ strlen(linhas) ] = "\"" + t["valor"] + "\""
+                } senao se (t["tipo"] == "NUMERO") {
+                    linhas[ strlen(linhas) ] = "\"" + t["valor"] + "\\n\""
+                } senao se (t["tipo"] == "IDENT") {
+                    linhas[ strlen(linhas) ] = "\"%s\", " + t["valor"]
+                } senao se (t["tipo"] == ",") {
+                    // ignore
+                } senao {
+                    linhas[ strlen(linhas) ] = "\"" + t["valor"] + "\""
+                }
+                i = i + 1
+            }
+            linhas[ strlen(linhas) ] = "    ); printf(\"\\n\");"
+        }
+
+        se (tipo == "IDENT") {
+            nome_var = tok["valor"]
+            i = i + 1
+
+            se (i < strlen(tokens) && tokens[i]["tipo"] == "=") {
+                i = i + 1
+                valor = ""
+
+                enquanto (i < strlen(tokens) && tokens[i]["tipo"] != ";") {
+                    tv = tokens[i]
+                    se (tv["tipo"] == "STRING") {
+                        valor = valor + "\"" + tv["valor"] + "\""
+                    } senao se (tv["tipo"] == "NUMERO") {
+                        valor = valor + tv["valor"]
+                    } senao se (tv["tipo"] == "verdadeiro") {
+                        valor = valor + "1"
+                    } senao se (tv["tipo"] == "falso") {
+                        valor = valor + "0"
+                    } senao se (tv["tipo"] == "IDENT") {
+                        valor = valor + tv["valor"]
+                    } senao {
+                        valor = valor + " " + tv["valor"] + " "
+                    }
+                    i = i + 1
+                }
+
+                // Determina tipo
+                se (substring(valor, 0, 1) == "\"") {
+                    linhas[ strlen(linhas) ] = "    char* " + nome_var + " = " + valor + ";"
+                } senao {
+                    linhas[ strlen(linhas) ] = "    int " + nome_var + " = " + valor + ";"
+                }
+            }
+        }
+
+        se (tipo == "se") {
+            linhas[ strlen(linhas) ] = "    if ("
+            i = i + 1
+            // condição
+            enquanto (i < strlen(tokens) && tokens[i]["tipo"] != "{") {
+                linhas[ strlen(linhas) ] = " " + tokens[i]["valor"]
+                i = i + 1
+            }
+            linhas[ strlen(linhas) ] = ") {"
+        }
+
+        se (tipo == "senao") {
+            linhas[ strlen(linhas) ] = "    } else {"
+        }
+
+        se (tipo == "enquanto") {
+            linhas[ strlen(linhas) ] = "    while ("
+            i = i + 1
+            enquanto (i < strlen(tokens) && tokens[i]["tipo"] != "{") {
+                linhas[ strlen(linhas) ] = " " + tokens[i]["valor"]
+                i = i + 1
+            }
+            linhas[ strlen(linhas) ] = ") {"
+        }
+
+        se (tipo == "para") {
+            linhas[ strlen(linhas) ] = "    for ("
+            i = i + 1
+            // init; condition; increment
+            count = 0
+            enquanto (i < strlen(tokens) && tokens[i]["tipo"] != "{") {
+                se (count == 1 || count == 2) {
+                    linhas[ strlen(linhas) ] = ";"
+                }
+                linhas[ strlen(linhas) ] = " " + tokens[i]["valor"]
+                count = count + 1
+                i = i + 1
+            }
+            linhas[ strlen(linhas) ] = ") {"
+        }
+
+        se (tipo == "pare") {
+            linhas[ strlen(linhas) ] = "    break;"
+        }
+
+        se (tipo == "continua") {
+            linhas[ strlen(linhas) ] = "    continue;"
+        }
+
+        se (tipo == "retorna") {
+            i = i + 1
+            valor = ""
+            enquanto (i < strlen(tokens) && tokens[i]["tipo"] != ";") {
+                valor = valor + tokens[i]["valor"] + " "
+                i = i + 1
+            }
+            linhas[ strlen(linhas) ] = "    return " + valor + ";"
+        }
+
+        se (tipo == "}") {
+            linhas[ strlen(linhas) ] = "    }"
+        }
+
+        i = i + 1
+    }
+
+    linhas[ strlen(linhas) ] = "    return 0;"
+    linhas[ strlen(linhas) ] = "}"
+
+    retorna join(linhas, "\n")
+}
+
+// ==================== MENSAGEM FINAL ====================
+
+escreva("==========================================")
+escreva("  CLX Compiler Bootstrap - Concluído!")
+escreva("==========================================")
+escreva("")
+escreva("Este compilador foi escrito em ULX!")
+escreva("")
+escreva("Para usar este compilador:")
+escreva("1. Compile este arquivo com Python:")
+escreva("   python3 clx_compiler.py clx_ulx.ulx")
+escreva("")
+escreva("2. Use o binário gerado para")
+escreva("   compilar outros arquivos ULX!")
+escreva("")
+escreva("Isso demonstra que ULX pode se")
+escreva("auto-compilar - uma linguagem que")
+escreva("se constrói a si mesma!")
+escreva("")
