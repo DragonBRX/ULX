@@ -1,0 +1,22 @@
+// Exemplo de tratamento de exceções
+escreva("=== Tratamento de Exceções ===")
+
+funcao divide(a, b) {
+    tente {
+        se (b == 0) {
+            lanca "Divisao por zero!"
+        }
+        retorna a / b
+    } pegue(erro) {
+        escreva("Erro capturado:", erro)
+        retorna 0
+    } finalmente {
+        escreva("Operacao finalizada")
+    }
+}
+
+resultado = divide(10, 2)
+escreva("10 / 2 =", resultado)
+
+resultado = divide(10, 0)
+escreva("10 / 0 =", resultado)

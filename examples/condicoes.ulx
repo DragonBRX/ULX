@@ -1,0 +1,21 @@
+// Exemplo de condicionais ULX
+escreva("=== Sistema de Notas ===")
+
+nota = 85
+
+se (nota >= 90) {
+    escreva("Conceito: A")
+} senao se (nota >= 80) {
+    escreva("Conceito: B")
+} senao se (nota >= 70) {
+    escreva("Conceito: C")
+} senao se (nota >= 60) {
+    escreva("Conceito: D")
+} senao {
+    escreva("Conceito: F")
+}
+
+// Operador ternário simulado
+idade = 18
+maior = idade >= 18
+escreva("Maior de idade:", maior)
