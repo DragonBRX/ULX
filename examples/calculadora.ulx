@@ -1,0 +1,49 @@
+// Calculadora - ULX v3.0
+// Exemplo de calculadora simples
+
+escreva("================================")
+escreva("  Calculadora ULX v3.0")
+escreva("================================")
+escreva("")
+
+escreva("Digite o primeiro número:")
+a = leia()
+
+escreva("Digite o segundo número:")
+b = leia()
+
+escreva("")
+escreva("Escolha a operação:")
+escreva("  +  Adição")
+escreva("  -  Subtração")
+escreva("  *  Multiplicação")
+escreva("  /  Divisão")
+escreva("")
+op = leia()
+
+escreva("")
+
+se (op == "+") {
+    resultado = a + b
+    escreva("Resultado:", a, " + ", b, " = ", resultado)
+} senao se (op == "-") {
+    resultado = a - b
+    escreva("Resultado:", a, " - ", b, " = ", resultado)
+} senao se (op == "*") {
+    resultado = a * b
+    escreva("Resultado:", a, " * ", b, " = ", resultado)
+} senao se (op == "/") {
+    se (b != 0) {
+        resultado = a / b
+        escreva("Resultado:", a, " / ", b, " = ", resultado)
+    } senao {
+        escreva("Erro: Divisão por zero!")
+    }
+} senao {
+    escreva("Operação inválida!")
+}
+
+escreva("")
+escreva("================================")
+escreva("  Calculadora Finalizada")
+escreva("================================")

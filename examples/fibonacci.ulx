@@ -1,0 +1,31 @@
+// Fibonacci - ULX v3.0
+// Calcula sequência de Fibonacci
+
+escreva("================================")
+escreva("  Sequência de Fibonacci")
+escreva("================================")
+escreva("")
+
+escreva("Quantos termos?")
+n = leia()
+
+escreva("")
+escreva("Sequência de Fibonacci:")
+escreva("-----------------------")
+
+a = 0
+b = 1
+
+para (i = 1; i <= n; i = i + 1) {
+    se (i > 1) {
+        c = a + b
+        a = b
+        b = c
+    } senao {
+        c = i - 1
+    }
+    escreva("Termo ", i, ": ", c)
+}
+
+escreva("")
+escreva("================================")
