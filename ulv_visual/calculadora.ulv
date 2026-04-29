@@ -1,0 +1,71 @@
+// Calculadora Visual - ULV
+// Interface visual gerada em ULV
+
+janela("Calculadora ULX") {
+    titulo: "Calculadora"
+    tamanho: 320x400
+
+    texto("Calculadora ULX")
+        posicao: topo
+        alinhamento: centro
+        fonte: Arial 24px
+        cor: #333333
+
+    texto("Operação:")
+        posicao: meio
+        alinhamento: esquerda
+
+    entrada(resultado)
+        posicao: meio
+        somente_leitura: verdadeiro
+        valor: "0"
+
+    botao("7")
+        posicao: baixo_esquerda
+        tamanho: 70x70
+        cor: #f0f0f0
+        acao: digitar("7")
+
+    botao("8")
+        posicao: baixo_centro
+        tamanho: 70x70
+        cor: #f0f0f0
+        acao: digitar("8")
+
+    botao("9")
+        posicao: baixo_direita
+        tamanho: 70x70
+        cor: #f0f0f0
+        acao: digitar("9")
+
+    botao("+")
+        posicao: operacao
+        tamanho: 70x70
+        cor: #ff9500
+        acao: operacao("+")
+
+    botao("=")
+        posicao: resultado
+        tamanho: 70x70
+        cor: #ff9500
+        acao: calcular()
+}
+
+// Funções
+funcao digitar(numero) {
+    se (resultado == "0") {
+        resultado = numero
+    } senao {
+        resultado = resultado + numero
+    }
+}
+
+funcao operacao(op) {
+    primeiro = resultado
+    operador = op
+}
+
+funcao calcular() {
+    // Cálculo da operação
+    retorna resultado
+}

@@ -1,0 +1,37 @@
+// Calculadora - ULX
+// Exemplo completo de calculadora
+
+funcao soma(a, b) {
+    retorna a + b
+}
+
+funcao subtracao(a, b) {
+    retorna a - b
+}
+
+funcao multiplicacao(a, b) {
+    retorna a * b
+}
+
+funcao divisao(a, b) {
+    se (b == 0) {
+        retorna 0
+    }
+    retorna a / b
+}
+
+escreva("=================================")
+escreva("  ULX Calculadora")
+escreva("=================================")
+escreva("")
+
+a = 10
+b = 3
+
+escreva(a, " + ", b, " = ", soma(a, b))
+escreva(a, " - ", b, " = ", subtracao(a, b))
+escreva(a, " * ", b, " = ", multiplicacao(a, b))
+escreva(a, " / ", b, " = ", divisao(a, b))
+
+escreva("")
+escreva("=================================")

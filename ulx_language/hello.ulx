@@ -1,0 +1,8 @@
+// Hello World - ULX v3.0
+// Primeiro programa em ULX
+
+escreva("=================================")
+escreva("  ULX - Hello World!")
+escreva("=================================")
+escreva("")
+escreva("Olá, Mundo!")

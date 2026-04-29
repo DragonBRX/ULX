@@ -1,115 +1,191 @@
-# ULX - Linguagem de Programação Universal
+# ULX - Universal Language for Everything
+## Sistema Completo de Desenvolvimento
 
-**ULX** é uma linguagem de programação revolucionária, fácil, rápida e universal. Desenvolvida para todos - iniciantes, programadores experientes, e até IAs.
+O ecossistema **ULX** é composto por três bases fundamentais que trabalham em conjunto:
 
-## Características Principais
+---
 
-- **Fácil para Todos**: Sintaxe simples em português, legível e intuitiva
-- **Ultra-Rápida**: Compila para binários nativos otimizados
-- **Universal**: Funciona em Windows, Linux, MacOS
-- **Visual**: Prévia visual em tempo real do seu código
-- **Cross-Platform**: Um código, qualquer sistema operacional
-- **Stdlib Completa**: Biblioteca padrão vasta para qualquer tarefa
+## 🏗️ AS TRÊS BASES
 
-## Instalação Rápida
+### 1️⃣ ULX - Universal Language (Linguagem de Programação)
 
-### Linux / Ubuntu
+Linguagem de programação em português, fácil e poderosa.
 
-```bash
-git clone https://github.com/DragonBRX/ULX.git
-cd ULX
-chmod +x install.sh
-sudo ./install.sh
-```
-
-### Windows
-
-```powershell
-git clone https://github.com/DragonBRX/ULX.git
-cd ULX
-.\install.ps1
-```
-
-### MacOS
-
-```bash
-git clone https://github.com/DragonBRX/ULX.git
-cd ULX
-chmod +x install.sh
-sudo ./install.sh
-```
-
-## Primeiro Programa
+**Arquivos:** `.ulx`
 
 ```ulx
 escreva("Olá, Mundo!")
+
+funcao soma(a, b) {
+    retorna a + b
+}
+
+resultado = soma(10, 20)
+escreva("Resultado:", resultado)
 ```
 
-## Sintaxe Básica
+**Características:**
+- Sintaxe em português
+- Tipagem dinâmica
+- Funções de primeira classe
+- Arrays e dicionários nativos
 
-```ulx
-// Variáveis
-nome = "Maria"
-idade = 25
-ativo = verdadeiro
+---
 
-// Condições
-se (idade >= 18) {
-    escreva("Maior de idade")
+### 2️⃣ ULV - Universal Language Visual (Linguagem Visual)
+
+Designer visual para criar interfaces, games e apps com drag & drop.
+
+**Arquivos:** `.ulv`
+
+```ulv
+janela("Minha App") {
+    titulo: "Aplicativo ULX"
+    tamanho: 400x300
+
+    texto("Olá, Mundo!")
+        posicao: centro
+        cor: azul
+
+    botao("Clique Aqui")
+        posicao: centro
+        cor: verde
+        acao: clique()
 }
-
-// Loops
-para (i = 1; i <= 10; i = i + 1) {
-    escreva(i)
-}
-
-// Funções
-funcao saudar(nome) {
-    retorna "Olá, " + nome
-}
-
-escreva(saudar("Mundo"))
 ```
 
-## Comandos Principais
+**Características:**
+- WYSIWYG (O que você vê é o que você executa)
+- Drag & Drop de componentes
+- Prévia em tempo real
+- Mesma base que ULX
+- Compila para ULX automaticamente
 
-| Comando | Descrição |
-|---------|-----------|
-| `ulx-compile <arquivo.ulx>` | Compila para binário |
-| `ulx-run <app.ulx>` | Executa aplicativo |
-| `ulx-visual` | Editor visual com prévia |
-| `ulx-pack <binario>` | Empacota aplicativo |
-| `ulx-init <projeto>` | Cria novo projeto |
+---
 
-## Performance
+### 3️⃣ CLX - Compiler & Language eXecutor (Compilador)
 
-ULX gera binários nativos extremamente otimizados:
+Compilador universal que processa ULX e ULV.
 
-- Compilação com GCC/Clang
-- Otimização -O3 nativa
-- Suporte SIMD (AVX2/AVX-512)
-- Binários estáticos (sem dependências)
-- Link-Time Optimization (LTO)
+**Uso:**
+```bash
+# Compila ULX
+clx-compile programa.ulx -o app
 
-## Roadmap
+# Compila ULV
+clx-compile interface.ulv -o app
 
-- [x] Compilador CLX
-- [x] Runtime ULX
-- [x] Bibliotecas padrão
-- [ ] Editor Visual completo
-- [ ] Debugger integrado
-- [ ] Gerenciador de pacotes
-- [ ] Suporte a banco de dados
-- [ ] Bindings para C/C++/Python
+# Apenas gera C
+clx-compile programa.ulx --c-only
+```
 
-## Documentação
+---
 
-Veja `docs/guia.md` para guia completo.
+## 🔄 FLUXO DE TRABALHO
 
-## Licença
+```
+┌─────────────────────────────────────────────────────────┐
+│                    ULV (Visual)                        │
+│  +----------------------------------------------------│
+│  │ janela("App") {                                    ││
+│  │     texto("Olá")                                    ││
+│  │     botao("Click")                                  ││
+│  │ }                                                   ││
+│  +----------------------------------------------------│
+│                         │                              │
+│                         ▼                              │
+│               CLX Compiler (ULV → ULX)                 │
+│                         │                              │
+└─────────────────────────┼───────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│                    ULX (Código)                         │
+│  +----------------------------------------------------│
+│  │ escreva("Olá")                                      ││
+│  │ botao("Click", acao: clique)                        ││
+│  +----------------------------------------------------│
+│                         │                              │
+└─────────────────────────┼───────────────────────────────┘
+                          │
+                          ▼
+              CLX Compiler (ULX → C)
+                          │
+                          ▼
+              GCC/Clang (C → Binário)
+                          │
+                          ▼
+                  Binário Nativo
+```
 
-MIT License - Use, modifique, distribua livremente.
+---
 
-## Autor
+## 📁 ESTRUTURA DO PROJETO
 
-DragonBRX - https://github.com/DragonBRX
+```
+ULX/
+├── ulx_language/           # Linguagem de programação
+│   ├── hello.ulx
+│   ├── calculadora.ulx
+│   └── README.md
+│
+├── ulv_visual/             # Linguagem visual
+│   ├── calculadora.ulv
+│   └── README.md
+│
+├── clx_compiler/           # Compilador universal
+│   ├── clx_compiler.py
+│   └── README.md
+│
+├── examples/
+│   ├── games/
+│   └── apps/
+│
+└── README.md
+```
+
+---
+
+## 🚀 COMO COMEÇAR
+
+### Instalação
+
+```bash
+git clone https://github.com/DragonBRX/ULX.git
+cd ULX
+chmod +x install.sh
+sudo ./install.sh
+```
+
+### ULX - Hello World
+
+```bash
+echo 'escreva("Olá, Mundo!")' > hello.ulx
+clx-compile hello.ulx -o hello
+./hello
+```
+
+### ULV - Interface Visual
+
+```bash
+cat > minha_app.ulv << 'EOF'
+janela("Minha App") {
+    texto("Olá, Mundo!")
+    botao("Clique Aqui")
+}
+EOF
+
+clx-compile minha_app.ulv -o minha_app
+./minha_app
+```
+
+---
+
+## 📄 LICENÇA
+
+MIT License
+
+---
+
+**Autor:** DragonBRX
+**GitHub:** https://github.com/DragonBRX/ULX
