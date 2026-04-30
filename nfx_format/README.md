@@ -1,8 +1,8 @@
-# NEURAL.FLUX (.nfx) - Especificação Técnica v1.0
+# NEURAL.FLUX (.nfx) - Especificacao Tecnica v1.0
 
-## Visão Geral
+## Visao Geral
 
-**NEURAL.FLUX** é um formato de armazenamento dinâmico para modelos de IA que substitui arquivos binários estáticos (.safetensors) por estruturas de grafos tensoriais indexados.
+**NEURAL.FLUX** e um formato de armazenamento dinamico para modelos de IA que substitui arquivos binarios estaticos (.safetensors) por estruturas de grafos tensoriais indexados.
 
 **Slogan:** "Don't just store weights. Stream intelligence."
 
@@ -11,28 +11,28 @@
 ## Estrutura do Arquivo
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ MAGIC BYTES (4 bytes)          → 4E 46 58 0A              │
-├─────────────────────────────────────────────────────────────┤
-│ HEADER JSON (variavel)       → Metadados + Topologia      │
-├─────────────────────────────────────────────────────────────┤
-│ SPARSE INDEX MAP (bitfield)  → Mapa de pesos não-zero    │
-├─────────────────────────────────────────────────────────────┤
-│ BIT-PLANE LAYER 0            → Bits mais significativos   │
-├─────────────────────────────────────────────────────────────┤
-│ BIT-PLANE LAYER 1            → ...                         │
-├─────────────────────────────────────────────────────────────┤
-│ ...                                                        │
-├─────────────────────────────────────────────────────────────┤
-│ BIT-PLANE LAYER N            → Bits menos significativos │
-├─────────────────────────────────────────────────────────────┤
-│ INDEX TABLE                  → Ponteiros para blocos       │
-└─────────────────────────────────────────────────────────────┘
++-------------------------------------------------------------+
+| MAGIC BYTES (4 bytes)          -> 4E 46 58 0A              |
++-------------------------------------------------------------+
+| HEADER JSON (variavel)       -> Metadados + Topologia      |
++-------------------------------------------------------------+
+| SPARSE INDEX MAP (bitfield)  -> Mapa de pesos nao-zero    |
++-------------------------------------------------------------+
+| BIT-PLANE LAYER 0            -> Bits mais significativos   |
++-------------------------------------------------------------+
+| BIT-PLANE LAYER 1            -> ...                         |
++-------------------------------------------------------------+
+| ...                                                        |
++-------------------------------------------------------------+
+| BIT-PLANE LAYER N            -> Bits menos significativos |
++-------------------------------------------------------------+
+| INDEX TABLE                  -> Ponteiros para blocos       |
++-------------------------------------------------------------+
 ```
 
 ---
 
-## Componentes Técnicos
+## Componentes Tecnicos
 
 ### 1. Magic Bytes (4 bytes)
 ```
@@ -75,32 +75,32 @@ N F X \n (0x4E 0x46 0x58 0x0A)
 
 ### 3. Sparse Index Map
 
-Mapa de bits indicando pesos não-zero:
+Mapa de bits indicando pesos nao-zero:
 - Bit = 1: peso significativo (armazenar)
 - Bit = 0: peso zero (pular)
 
 ### 4. Bit-Plane Storage
 
-Organização em planos de bits para carregamento progressivo:
-- Layer 0: Bits mais significativos (importância máxima)
+Organizacao em planos de bits para carregamento progressivo:
+- Layer 0: Bits mais significativos (importancia maxima)
 - Layer N: Bits menos significativos (detalhes finos)
 
 ---
 
-## Diferenciais Técnicos
+## Diferenciais Tecnicos
 
-### 🔧 Bit-Depth Adaptativo
+### Bit-Depth Adaptativo
 
-Cada camada pode ter precisão diferente:
+Cada camada pode ter precisao diferente:
 
-| Tipo de Camada     | Precisão  | Razão                        |
+| Tipo de Camada     | Precisao  | Razao                        |
 |--------------------|-----------|------------------------------|
-| Attention QKV      | 4-bit     | Alta precisão necessária    |
-| MLP Feed-forward   | 1.58-bit  | Pode usar baixa precisão     |
-| Embeddings         | 8-bit     | Precisão moderada            |
-| Layer Norm         | 16-bit    | Precisão total               |
+| Attention QKV      | 4-bit     | Alta precisao necessaria    |
+| MLP Feed-forward   | 1.58-bit  | Pode usar baixa precisao     |
+| Embeddings         | 8-bit     | Precisao moderada            |
+| Layer Norm         | 16-bit    | Precisao total               |
 
-### ⚡ Paging Granular (mmap)
+### Paging Granular (mmap)
 
 ```
 # Sem mmap (safetensors):
@@ -110,10 +110,10 @@ model = load_tensor("model.safetensors")  # 70GB em RAM
 model = mmap_tensor("model.nfx")  # 0GB em RAM, carrega sob demanda
 ```
 
-### 🧠 HIP (Header de Inferência Preditiva)
+### HIP (Header de Inferencia Preditiva)
 
 ```python
-# O header sugere pré-carregamento baseado no contexto
+# O header sugere pre-carregamento baseado no contexto
 hip = {
     "task_type": "chat",
     "expected_tokens": 2048,
@@ -123,18 +123,18 @@ hip = {
 
 ---
 
-## Conversão .safetensors → .nfx
+## Conversao .safetensors -> .nfx
 
-### Algoritmo de Destilação
+### Algoritmo de Destilacao
 
-1. **Análise de Importância**: Identificar pesos redundantes
-2. **Quantização Adaptativa**: Aplicar precisão por camada
+1. **Analise de Importancia**: Identificar pesos redundantes
+2. **Quantizacao Adaptativa**: Aplicar precisao por camada
 3. **Sparsity Extraction**: Criar mapa de zeros
 4. **Bit-Plane Slicing**: Organizar em camadas de bits
-5. **Compressão Final**: Redução de ~60% no tamanho
+5. **Compressao Final**: Reducao de ~60% no tamanho
 
 ```python
-# Exemplo de conversão
+# Exemplo de conversao
 from nfx_converter import SafeToNFX
 
 converter = SafeToNFX()
@@ -152,25 +152,25 @@ converter.export("model.nfx")
 
 ## Benchmark Esperado
 
-| Métrica              | .safetensors  | .nfx          | Melhoria    |
+| Metrica              | .safetensors  | .nfx          | Melhoria    |
 |----------------------|---------------|---------------|-------------|
 | Tamanho arquivo      | 140 GB        | 56 GB         | -60%        |
-| Memória RAM (load)   | 140 GB        | 0 GB          | mmap        |
+| Memoria RAM (load)   | 140 GB        | 0 GB          | mmap        |
 | Tempo primeira token | 45s           | 2s            | 22x         |
-| Streaming_tokens/s   | 0             | 120           | ∞           |
+| Streaming_tokens/s   | 0             | 120           | infinito    |
 
 ---
 
 ## Casos de Uso
 
 1. **Modelos grandes**: LLM 7B+ em dispositivos com RAM limitada
-2. **Edge Computing**: IA em IoT/mobile com cache dinâmico
+2. **Edge Computing**: IA em IoT/mobile com cache dinamico
 3. **Streaming de modelos**: Modelo "chega" conforme necessidade
-4. **Edição de pesos**: Alterar camada sem recarregar modelo inteiro
+4. **Edicao de pesos**: Alterar camada sem recarregar modelo inteiro
 
 ---
 
-## Integração ULQ
+## Integracao ULQ
 
 O formato .nfx pode ser descrito em ULQ para IAs:
 
@@ -187,7 +187,7 @@ O formato .nfx pode ser descrito em ULQ para IAs:
         "layers": 80,
         "streaming": true
     },
-    "description": "Modelo neural em formato NEURAL.FLUX com streaming dinâmico"
+    "description": "Modelo neural em formato NEURAL.FLUX com streaming dinamico"
 }
 ```
 
@@ -195,9 +195,9 @@ O formato .nfx pode ser descrito em ULQ para IAs:
 
 ## Status: Experimental
 
-Este é um formato experimental que requer:
+Este e um formato experimental que requer:
 
-- Implementação em C/CUDA para máxima performance
+- Implementacao em C/CUDA para maxima performance
 - Testes de benchmark contra safetensors
 - Suporte de frameworks (PyTorch, TensorFlow)
 

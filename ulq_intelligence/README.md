@@ -1,19 +1,19 @@
 # ULQ - Universal Language for Intelligence
 ## Quarta Base - Interface para IAs
 
-**ULQ** é a base opcional e experimental do ecossistema ULX, projetada especificamente para **Inteligências Artificiais**.
+**ULQ** e a base opcional e experimental do ecossistema ULX, projetada especificamente para **Inteligencias Artificiais**.
 
-### 🎯 Propósito
+### Proposito
 
-Permitir que IAs entendam, visualizem e gerem código ULX/ULV sem erros, através de uma representação padronizada e otimizada.
+Permitir que IAs entendam, visualizem e gerem codigo ULX/ULV sem erros, atraves de uma representacao padronizada e otimizada.
 
-### 💡 Como Funciona
+### Como Funciona
 
 ```
-IAs → ULQ (Visualização) → ULX/ULV (Código) → CLX → Binário
+IAs -> ULQ (Visualizacao) -> ULX/ULV (Codigo) -> CLX -> Binario
 ```
 
-### 📋 Estrutura ULQ
+### Estrutura ULQ
 
 ULQ usa formato JSON otimizado para ser processado por qualquer modelo de IA:
 
@@ -22,13 +22,13 @@ ULQ usa formato JSON otimizado para ser processado por qualquer modelo de IA:
     "type": "window",
     "name": "App",
     "children": [
-        {"type": "text", "content": "Olá, Mundo!"},
+        {"type": "text", "content": "Ola, Mundo!"},
         {"type": "button", "text": "Click", "action": "onClick"}
     ]
 }
 ```
 
-### 🔧 API ULQ para IAs
+### API ULQ para IAs
 
 ```python
 # Importar ULQ
@@ -39,7 +39,7 @@ janela = {
     "type": "window",
     "title": "Minha App",
     "children": [
-        {"type": "text", "content": "Olá, IA!"},
+        {"type": "text", "content": "Ola, IA!"},
         {"type": "button", "action": "saudar"}
     ]
 }
@@ -51,17 +51,17 @@ codigo_ulx = ulq.to_ulx(janela)
 ulq.compile(codigo_ulx, "app")
 ```
 
-### 🧠 Para IAs
+### Para IAs
 
-ULQ foi projetado para resolver os problemas que IAs têm com código:
+ULQ foi projetado para resolver os problemas que IAs tem com codigo:
 
 1. **Sem ambiguidade**: Cada comando tem um significado claro
-2. **Visualização direta**: IAs podem "ver" a estrutura antes de gerar
+2. **Visualizacao direta**: IAs podem "ver" a estrutura antes de gerar
 3. **Zero erros de sintaxe**: Formato padronizado JSON
-4. **Otimizado para modelos**: Tokens mínimos, meaning máximo
-5. **Validação automática**: Verifica erros antes de compilar
+4. **Otimizado para modelos**: Tokens minimos, meaning maximo
+5. **Validacao automatica**: Verifica erros antes de compilar
 
-### 📝 Exemplo ULQ
+### Exemplo ULQ
 
 ```json
 {
@@ -76,12 +76,12 @@ ULQ foi projetado para resolver os problemas que IAs têm com código:
         {
             "type": "input",
             "name": "a",
-            "label": "Número 1"
+            "label": "Numero 1"
         },
         {
             "type": "input",
             "name": "b",
-            "label": "Número 2"
+            "label": "Numero 2"
         },
         {
             "type": "button",
@@ -95,15 +95,15 @@ ULQ foi projetado para resolver os problemas que IAs têm com código:
 }
 ```
 
-### 🔄 Conversão ULQ ↔ ULX
+### Conversao ULQ <-> ULX
 
 ```
-ULQ (JSON) ←→ ULX (Texto)
-     ↓              ↓
-   Visual        Código
+ULQ (JSON) <-> ULX (Texto)
+     |              |
+   Visual        Codigo
 ```
 
-### 🚀 Uso
+### Uso
 
 ```python
 from ulq import ULQParser
@@ -118,7 +118,7 @@ if parser.is_valid(ulq_data):
     clx_compile(codigo)
 ```
 
-### ⚙️ Para Todos os Modelos
+### Para Todos os Modelos
 
 ULQ funciona com qualquer IA que processa JSON:
 
@@ -129,7 +129,7 @@ ULQ funciona com qualquer IA que processa JSON:
 - MiniMax
 - Qualquer outro modelo
 
-### 📦 Implementação
+### Implementacao
 
 ```python
 class ULQParser:
@@ -143,37 +143,37 @@ class ULQParser:
 
     def parse(self, ulq_data):
         """Converte ULQ para ULX"""
-        # Validação
+        # Validacao
         if not self.is_valid(ulq_data):
-            raise ValueError("ULQ inválido")
+            raise ValueError("ULQ invalido")
 
-        # Conversão
+        # Conversao
         return self._convert(ulq_data)
 
     def is_valid(self, ulq_data):
-        """Verifica se ULQ é válido"""
+        """Verifica se ULQ e valido"""
         return (
             "type" in ulq_data and
             ulq_data["type"] in self.valid_types
         )
 ```
 
-### 🎯 Benefícios
+### Beneficios
 
-| Problema | Solução ULQ |
+| Problema | Solucao ULQ |
 |----------|-------------|
-| Códigos com erros de sintaxe | Formato JSON estruturado |
-| Ambigüidade em comandos | Tipos definidos e claros |
-| IAs não visualizam código | Representação visual em JSON |
-| Falta de padronização | Schema único e consistente |
-| Dificuldade em depurar | Validação automática |
+| Codigos com erros de sintaxe | Formato JSON estruturado |
+| Ambiguedade em comandos | Tipos definidos e claros |
+| IAs nao visualizam codigo | Representacao visual em JSON |
+| Falta de padronizacao | Schema unico e consistente |
+| Dificuldade em depurar | Validacao automatica |
 
-### 🔮 Experimental
+### Experimental
 
-ULQ é uma base **opcional e experimental**. Não é obrigatório usar ULQ para criar apps ULX - você pode usar ULX ou ULV diretamente.
+ULQ e uma base **opcional e experimental**. Nao e obrigatorio usar ULQ para criar apps ULX - voce pode usar ULX ou ULV diretamente.
 
-ULQ foi adicionado para facilitar o trabalho de IAs e permitir que elas gerem código ULX sem erros.
+ULQ foi adicionado para facilitar o trabalho de IAs e permitir que elas gerem codigo ULX sem erros.
 
 ---
 
-**Nota:** ULQ é experimental e pode mudar em futuras versões.
+**Nota:** ULQ e experimental e pode mudar em futuras versoes.

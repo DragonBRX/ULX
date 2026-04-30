@@ -1,19 +1,19 @@
-# 🧪 Pasta Experimental - ULX
+# Pasta Experimental - ULX
 
-**⚠️ ATENÇÃO: Todo conteúdo aqui é EXPERIMENTAL e NÃO está pronto para produção.**
-
----
-
-## O que é isto?
-
-Esta pasta contém ideias e conceitos que estão em fase de **teste e pesquisa**. São funcionalidades que podem evoluir, mudar significativamente, ou até serem removidas futuramente.
+**ATENCAO: Todo conteudo aqui e EXPERIMENTAL e NAO esta pronto para producao.**
 
 ---
 
-## Conteúdo Atual
+## O que e isto?
 
-### 📦 `nfx_format/` - NEURAL.FLUX (.nfx)
-Formato de armazenamento dinâmico para modelos de IA.
+Esta pasta contem ideias e conceitos que estao em fase de **teste e pesquisa**. Sao funcionalidades que podem evoluir, mudar significativamente, ou ate serem removidas futuramente.
+
+---
+
+## Conteudo Atual
+
+### `nfx_format/` - NEURAL.FLUX (.nfx)
+Formato de armazenamento dinamico para modelos de IA.
 
 **Status:** Experimental
 **Objetivo:** Substituir .safetensors por estruturas de grafos tensoriais indexados com:
@@ -22,41 +22,41 @@ Formato de armazenamento dinâmico para modelos de IA.
 - Sparsity nativa
 - Streaming de pesos
 
-**⚠️ NÃO PRODUÇÃO:** Requer implementação em C/CUDA para performance real.
+**NAO PRODUCAO:** Requer implementacao em C/CUDA para performance real.
 
 ---
 
-### 🎯 `npx_classifier/` - NEURAL.PULSE (.npx)
-Classificador semântico para IA baseada em indexação.
+### `npx_classifier/` - NEURAL.PULSE (.npx)
+Classificador semantico para IA baseada em indexacao.
 
 **Status:** Experimental
 **Objetivo:** Transformar IA de "busca linear" para "acesso direto por gavetas" usando:
-- DNA semântico (classificação hierárquica)
-- Filtro de intenção
-- Ponteiros para binários
+- DNA semantico (classificacao hierarquica)
+- Filtro de intencao
+- Ponteiros para binarios
 
-**⚠️ NÃO PRODUÇÃO:** Conceito requer mapeamento de 100.000+ conceitos.
+**NAO PRODUCAO:** Conceito requer mapeamento de 100.000+ conceitos.
 
 ---
 
 ## Por que experimental?
 
-1. **Performance não testada:** Não há benchmarks reais contra soluções atuais
-2. **Implementação incompleta:** Apenas protótipos em Python
-3. **Padrões não estabelecidos:** Pode mudar significativamente
-4. **Sem comunidade:** Não há adoção ou feedback de outros desenvolvedores
+1. **Performance nao testada:** Nao ha benchmarks reais contra solucoes atuais
+2. **Implementacao incompleta:** Apenas prototipos em Python
+3. **Padroes nao estabelecidos:** Pode mudar significativamente
+4. **Sem comunidade:** Nao ha adotacao ou feedback de outros desenvolvedores
 
 ---
 
 ## Roadmap Experimental
 
 ```
-Fase 1 ✅ Conceito criado (atual)
-Fase 2 ⏳ Implementar protótipos funcionais
-Fase 3 ⏳ Benchmarking contra soluções atuais
-Fase 4 ⏳ Implementação em C/CUDA
-Fase 5 ⏳ Adoção pela comunidade
-Fase 6 ⏳ Estável para produção
+Fase 1 [OK] Conceito criado (atual)
+Fase 2 [  ] Implementar prototipos funcionais
+Fase 3 [  ] Benchmarking contra solucoes atuais
+Fase 4 [  ] Implementacao em C/CUDA
+Fase 5 [  ] Adotacao pela comunidade
+Fase 6 [  ] Estavel para producao
 ```
 
 ---
@@ -80,10 +80,10 @@ python npx_classifier.py classify "Como consertar um motor?"
 ## Avisos Legais
 
 - Use por sua conta e risco
-- Não há garantias de funcionamento
-- Contribuições são bem-vindas mas funcionalidades podem ser removidas
+- Nao ha garantias de funcionamento
+- Contribuicoes sao bem-vindas mas funcionalidades podem ser removidas
 
 ---
 
-**🧪 Experimental desde:** 2025-04-29
-**📧 Mantido por:** ULX Team (DragonBRX)
+**Experimental desde:** 2025-04-29
+**Mantido por:** ULX Team (DragonBRX)
