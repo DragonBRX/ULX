@@ -1,0 +1,496 @@
+// NPX - Classificador de Formato Neural ULX v1.0
+// =============================================
+// Classificador universal para formatos de modelos neurais
+// Suporta: NFX, NPX, Safetensors, GGUF, ONNX
+// Todo o codigo em ULX puro, sem dependencias de outras linguagens
+
+escreva("========================================")
+escreva("  NPX - Classificador de Formato Neural")
+escreva("========================================")
+escreva("")
+
+// ============================================
+// CONSTANTES DOS FORMATOS
+// ============================================
+
+FORMATOS = {
+    NFX: {
+        nome: "NFX",
+        descricao: "Neural Format eXtensible",
+        versao: "4.0",
+        extensao: ".nfx",
+        tipo: "nativo_ulx",
+        compressao: verdadeiro,
+        chunked: verdadeiro
+    },
+    NPX: {
+        nome: "NPX",
+        descricao: "Neural Package eXtensible",
+        versao: "1.0",
+        extensao: ".npx",
+        tipo: "pacote_neural",
+        compressao: verdadeiro,
+        chunked: verdadeiro
+    },
+    SAFETENSORS: {
+        nome: "Safetensors",
+        descricao: "Safe Tensor Format",
+        versao: "1.0",
+        extensao: ".safetensors",
+        tipo: "tensores_seguros",
+        compressao: verdadeiro,
+        chunked: falso
+    },
+    GGUF: {
+        nome: "GGUF",
+        descricao: "GPT-Generated Unified Format",
+        versao: "3.0",
+        extensao: ".gguf",
+        tipo: "formato_unificado",
+        compressao: falso,
+        chunked: falso
+    },
+    ONNX: {
+        nome: "ONNX",
+        descricao: "Open Neural Network Exchange",
+        versao: "1.15",
+        extensao: ".onnx",
+        tipo: "intercambio",
+        compressao: falso,
+        chunked: verdadeiro
+    }
+}
+
+// ============================================
+// CABECALHOS DOS FORMATOS
+// ============================================
+
+CABECALHOS = {
+    NFX: [0x4E, 0x46, 0x58, 0x0A],           // NFX\n
+    NPX: [0x4E, 0x50, 0x58, 0x0A],           // NPX\n
+    SAFETENSORS: [0x35, 0x34, 0x38, 0x30],   // 4580
+    GGUF: [0x47, 0x47, 0x55, 0x46],          // GGUF
+    ONNX: [0x08, 0x00, 0x12, 0x00]           // ONNX proto
+}
+
+// ============================================
+// DETECTOR DE FORMATO
+// ============================================
+
+funcao detectar_formato(dados) {
+    // Verificar tamanho minimo
+    se (tamanho(dados) < 4) {
+        retorna {
+            formato: "DESCONHECIDO",
+            confianca: 0.0,
+            mensagem: "Dados insuficientes para analise"
+        }
+    }
+
+    // Verificar cada formato
+    resultados = []
+
+    // NFX
+    se (comparar_bytes(dados, CABECALHOS.NFX, 4)) {
+        resultados.acolher({
+            formato: FORMATOS.NFX,
+            confianca: 1.0
+        })
+    }
+
+    // NPX
+    se (comparar_bytes(dados, CABECALHOS.NPX, 4)) {
+        resultados.acolher({
+            formato: FORMATOS.NPX,
+            confianca: 1.0
+        })
+    }
+
+    // Safetensors
+    se (comparar_bytes(dados, CABECALHOS.SAFETENSORS, 4)) {
+        resultados.acolher({
+            formato: FORMATOS.SAFETENSORS,
+            confianca: 0.95
+        })
+    }
+
+    // GGUF
+    se (comparar_bytes(dados, CABECALHOS.GGUF, 4)) {
+        resultados.acolher({
+            formato: FORMATOS.GGUF,
+            confianca: 1.0
+        })
+    }
+
+    // ONNX
+    se (comparar_bytes(dados, CABECALHOS.ONNX, 4)) {
+        resultados.acolher({
+            formato: FORMATOS.ONNX,
+            confianca: 0.9
+        })
+    }
+
+    // Retornar melhor resultado
+    se (tamanho(resultados) > 0) {
+        melhor = resultados[0]
+        para (i = 1; i < tamanho(resultados); i = i + 1) {
+            se (resultados[i].confianca > melhor.confianca) {
+                melhor = resultados[i]
+            }
+        }
+        retorna {
+            formato: melhor.formato.nome,
+            descricao: melhor.formato.descricao,
+            confianca: melhor.confianca,
+            versao: melhor.formato.versao,
+            tipo: melhor.formato.tipo
+        }
+    }
+
+    retorna {
+        formato: "DESCONHECIDO",
+        confianca: 0.0,
+        mensagem: "Nenhum formato conhecido detectado"
+    }
+}
+
+funcao comparar_bytes(dados, cabecalho, tamanho_comparar) {
+    para (i = 0; i < tamanho_comparar; i = i + 1) {
+        se (dados[i] != cabecalho[i]) {
+            retorna falso
+        }
+    }
+    retorna verdadeiro
+}
+
+// ============================================
+// ANALISADOR DE FORMATO
+// ============================================
+
+funcao analisar_formato(dados, nome_arquivo) {
+    resultado = detectar_formato(dados)
+
+    se (resultado.formato == "DESCONHECIDO") {
+        // Tentar detectar pela extensao
+        resultado = detectar_por_extensao(nome_arquivo)
+    }
+
+    retorna resultado
+}
+
+funcao detectar_por_extensao(nome_arquivo) {
+    extensoes = {
+        ".nfx": FORMATOS.NFX,
+        ".npx": FORMATOS.NPX,
+        ".safetensors": FORMATOS.SAFETENSORS,
+        ".bin": FORMATOS.GGUF,
+        ".gguf": FORMATOS.GGUF,
+        ".onnx": FORMATOS.ONNX
+    }
+
+    para (extensao em extensoes) {
+        se (contem(nome_arquivo, extensao)) {
+            formato = extensoes[extensao]
+            retorna {
+                formato: formato.nome,
+                descricao: formato.descricao,
+                confianca: 0.7,
+                versao: formato.versao,
+                tipo: formato.tipo,
+                detectado_por: "extensao"
+            }
+        }
+    }
+
+    retorna {
+        formato: "DESCONHECIDO",
+        confianca: 0.0,
+        mensagem: "Extensao nao reconhecida"
+    }
+}
+
+// ============================================
+// VALIDADOR DE FORMATO
+// ============================================
+
+funcao validar_formato(dados, formato_esperado) {
+    resultado = detectar_formato(dados)
+
+    se (resultado.formato == formato_esperado) {
+        retorna {
+            valido: verdadeiro,
+            resultado: resultado
+        }
+    }
+
+    retorna {
+        valido: falso,
+        resultado: resultado,
+        esperado: formato_esperado,
+        obtido: resultado.formato
+    }
+}
+
+// ============================================
+// COMPARADOR DE FORMATOS
+// ============================================
+
+funcao comparar_formatos() {
+    // Comparacao entre todos os formatos suportados
+    formatos = [FORMATOS.NFX, FORMATOS.NPX, FORMATOS.SAFETENSORS, FORMATOS.GGUF, FORMATOS.ONNX]
+
+    comparacao = []
+
+    para (i = 0; i < tamanho(formatos); i = i + 1) {
+        para (j = i + 1; j < tamanho(formatos); j = i + 1) {
+            se (j < tamanho(formatos)) {
+                formato_a = formatos[i]
+                formato_b = formatos[j]
+
+                comparacao.acolher({
+                    par: formato_a.nome + " vs " + formato_b.nome,
+                    criterios: {
+                        compressao: formatar_comparacao(formato_a.compressao, formato_b.compressao),
+                        chunked: formatar_comparacao(formato_a.chunked, formato_b.chunked),
+                        tipo: formato_a.tipo + " vs " + formato_b.tipo
+                    }
+                })
+            }
+        }
+    }
+
+    retorna comparacao
+}
+
+funcao formatar_comparacao(a, b) {
+    se (a == b) {
+        retorna "igual"
+    }
+    se (a == verdadeiro) {
+        retorna "A melhor"
+    }
+    retorna "B melhor"
+}
+
+// ============================================
+// EXTRATOR DE METADADOS
+// ============================================
+
+funcao extrair_metadados(dados, formato) {
+    metadados = {
+        tamanho_bytes: tamanho(dados),
+        formato: formato,
+        tamanho_formatado: formatar_tamanho(tamanho(dados))
+    }
+
+    // Metadados especificos por formato
+    se (formato == "NFX" || formato == "NPX") {
+        metadados.acolher({
+            magic_number: extrair_magic_number(dados, 4),
+            offset_dados: 256,
+            checksum: calcular_checksum_simples(dados)
+        })
+    }
+
+    se (formato == "GGUF") {
+        metadados.acolher({
+            magic_number: extrair_magic_number(dados, 4),
+            versao_gguf: extrair_int32(dados, 4)
+        })
+    }
+
+    retorna metadados
+}
+
+funcao extrair_magic_number(dados, tamanho) {
+    magic = ""
+    para (i = 0; i < tamanho; i = i + 1) {
+        magic = magic + caractere(dados[i])
+    }
+    retorna magic
+}
+
+funcao extrair_int32(dados, offset) {
+    // Simulacao simplificada
+    retorna 0
+}
+
+funcao calcular_checksum_simples(dados) {
+    soma = 0
+    para (i = 0; i < tamanho(dados); i = i + 1) {
+        soma = soma + dados[i]
+    }
+    retorna soma % 256
+}
+
+funcao caractere(valor) {
+    // Simulacao simplificada de conversao para caractere
+    se (valor >= 32 && valor < 127) {
+        retorna "?"
+    }
+    retorna "."
+}
+
+funcao formatar_tamanho(bytes) {
+    se (bytes < 1024) {
+        retorna texto(bytes) + " B"
+    }
+    se (bytes < 1024 * 1024) {
+        retorna texto(inteiro(bytes / 1024)) + " KB"
+    }
+    se (bytes < 1024 * 1024 * 1024) {
+        retorna texto(inteiro(bytes / (1024 * 1024))) + " MB"
+    }
+    retorna texto(inteiro(bytes / (1024 * 1024 * 1024))) + " GB"
+}
+
+funcao inteiro(valor) {
+    retorna valor - (valor % 1)
+}
+
+funcao texto(valor) {
+    // Simulacao simples de conversao para texto
+    retorna "?"
+}
+
+funcao contem(texto, substring) {
+    // Simulacao simplificada
+    para (i = 0; i < tamanho(texto); i = i + 1) {
+        se (i + tamanho(substring) <= tamanho(texto)) {
+            igual = verdadeiro
+            para (j = 0; j < tamanho(substring); j = j + 1) {
+                se (texto[i + j] != substring[j]) {
+                    igual = falso
+                }
+            }
+            se (igual) {
+                retorna verdadeiro
+            }
+        }
+    }
+    retorna falso
+}
+
+// ============================================
+// CONVERSOR DE FORMATOS
+// ============================================
+
+funcao converter_formato(formato_origem, formato_destino, dados) {
+    resultado = detectar_formato(dados)
+
+    se (resultado.formato != formato_origem) {
+        retorna {
+            sucesso: falso,
+            erro: "Formato de origem invalido"
+        }
+    }
+
+    // Simulacao de conversao
+    conversao = {
+        origem: formato_origem,
+        destino: formato_destino,
+        sucesso: verdadeiro,
+        tamanho_original: tamanho(dados),
+        tamanho_convertido: tamanho(dados) * 0.95,
+        metodo: "conversao_" + formato_origem + "_para_" + formato_destino
+    }
+
+    retorna conversao
+}
+
+// ============================================
+// TESTE DO CLASSIFICADOR
+// ============================================
+
+escreva("========================================")
+escreva("  Teste do Classificador NPX")
+escreva("========================================")
+escreva("")
+
+// Dados de exemplo para cada formato
+dados_teste = []
+
+// NFX
+dados_nfx = [0x4E, 0x46, 0x58, 0x0A, 0x04, 0x00, 0x00, 0x00]
+dados_teste.acolher({nome: "NFX", dados: dados_nfx})
+
+// NPX
+dados_npx = [0x4E, 0x50, 0x58, 0x0A, 0x01, 0x00, 0x00, 0x00]
+dados_teste.acolher({nome: "NPX", dados: dados_npx})
+
+// Safetensors
+dados_safety = [0x35, 0x34, 0x38, 0x30, 0x01, 0x00, 0x00, 0x00]
+dados_teste.acolher({nome: "Safetensors", dados: dados_safety})
+
+// GGUF
+dados_gguf = [0x47, 0x47, 0x55, 0x46, 0x03, 0x00, 0x00, 0x00]
+dados_teste.acolher({nome: "GGUF", dados: dados_gguf})
+
+// ONNX
+dados_onnx = [0x08, 0x00, 0x12, 0x00, 0x01, 0x00, 0x00, 0x00]
+dados_teste.acolher({nome: "ONNX", dados: dados_onnx})
+
+// Desconhecido
+dados_desconhecido = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+dados_teste.acolher({nome: "Desconhecido", dados: dados_desconhecido})
+
+escreva("Testando deteccao de formatos...")
+escreva("")
+
+para (i = 0; i < tamanho(dados_teste); i = i + 1) {
+    teste = dados_teste[i]
+    resultado = detectar_formato(teste.dados)
+
+    escreva("Arquivo: ", teste.nome)
+    escreva("  Formato detectado: ", resultado.formato)
+    escreva("  Confianca: ", resultado.confianca * 100, "%")
+    se (resultado.descricao) {
+        escreva("  Descricao: ", resultado.descricao)
+    }
+    escreva("")
+}
+
+// Teste de extensao
+escreva("========================================")
+escreva("  Teste por Extensao")
+escreva("========================================")
+escreva("")
+
+arquivos = ["modelo.nfx", "pesos.npx", "tensores.safetensors", "modelo.gguf", "rede.onnx"]
+
+para (i = 0; i < tamanho(arquivos); i = i + 1) {
+    arquivo = arquivos[i]
+    resultado = detectar_por_extensao(arquivo)
+    escreva("Arquivo: ", arquivo)
+    escreva("  Formato: ", resultado.formato)
+    escreva("  Confianca: ", resultado.confianca * 100, "%")
+    escreva("")
+}
+
+// Teste de conversao
+escreva("========================================")
+escreva("  Teste de Conversao")
+escreva("========================================")
+escreva("")
+
+conversao_teste = converter_formato("NFX", "NPX", dados_nfx)
+escreva("NFX para NPX:")
+escreva("  Sucesso: ", conversao_teste.sucesso)
+se (conversao_teste.sucesso) {
+    escreva("  Metodo: ", conversao_teste.metodo)
+}
+escreva("")
+
+escreva("========================================")
+escreva("  NPX Classificador Concluido!")
+escreva("========================================")
+escreva("")
+escreva("Todo o codigo em ULX puro")
+escreva("Sem dependencia de outras linguagens")
+escreva("")
+escreva("Formatos suportados:")
+escreva("  - NFX (Neural Format eXtensible)")
+escreva("  - NPX (Neural Package eXtensible)")
+escreva("  - Safetensors (Safe Tensor Format)")
+escreva("  - GGUF (GPT-Generated Unified Format)")
+escreva("  - ONNX (Open Neural Network Exchange)")
