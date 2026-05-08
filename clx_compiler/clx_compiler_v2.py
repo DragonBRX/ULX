@@ -1,0 +1,464 @@
+#!/usr/bin/env python3
+"""
+CLX Compiler v4.0 - Compilador Universal ULX/ULV Melhorado
+Com tratamento de erros robusto, logging e suporte a mais tipos
+"""
+
+import sys
+import os
+import re
+import subprocess
+import argparse
+import platform
+import time
+from pathlib import Path
+from typing import Optional, List, Dict, Any
+
+# Adiciona parent ao path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from ulx_core.lexer import Lexer
+from ulx_core.parser import Parser, Program, FunctionDef, FunctionCall
+from ulx_core.interpreter import Interpreter
+from ulx_core.logger import ULXLogger, LogLevel
+from ulx_core.errors import ErrorHandler, ULXError
+
+
+class CLXCompiler:
+    """Compilador CLX melhorado"""
+    
+    def __init__(self, verbose: bool = False, target: str = "native"):
+        self.logger = ULXLogger(
+            name="CLX",
+            level=LogLevel.DEBUG if verbose else LogLevel.INFO,
+            verbose=verbose
+        )
+        self.error_handler = ErrorHandler()
+        self.target = target
+        self.source_file = None
+        self.output = None
+        self.stats = {
+            'tokens': 0,
+            'ast_nodes': 0,
+            'functions': 0,
+            'compile_time': 0,
+        }
+    
+    def compile_file(self, source_file: str, output: str = None, 
+                     c_only: bool = False) -> bool:
+        """Compila arquivo ULX/ULV"""
+        start_time = time.time()
+        self.source_file = source_file
+        self.output = output or self._default_output(source_file)
+        
+        self.logger.compile_step(1, 4, f"Lendo arquivo: {source_file}")
+        
+        # Lê arquivo
+        try:
+            with open(source_file, 'r', encoding='utf-8') as f:
+                source = f.read()
+        except FileNotFoundError:
+            self.logger.error(f"Arquivo não encontrado: {source_file}")
+            return False
+        except UnicodeDecodeError:
+            self.logger.error(f"Erro de codificação no arquivo: {source_file}")
+            return False
+        except PermissionError:
+            self.logger.error(f"Permissão negada: {source_file}")
+            return False
+        
+        self.logger.compile_step(2, 4, "Analisando léxica e sintática")
+        
+        # Lexing
+        lexer = Lexer(source, source_file)
+        tokens = lexer.tokenize()
+        
+        if lexer.has_errors():
+            for err in lexer.get_errors():
+                print(err.format_error())
+            self.logger.error("Erros léxicos encontrados")
+            return False
+        
+        self.stats['tokens'] = len(tokens)
+        self.logger.info(f"Tokens gerados: {len(tokens)}")
+        
+        # Parsing
+        parser = Parser(tokens, source, source_file)
+        program = parser.parse()
+        
+        if parser.has_errors():
+            parser.errors.print_summary()
+            for err in parser.errors.errors:
+                print(err.format_error())
+            self.logger.error("Erros sintáticos encontrados")
+            return False
+        
+        ast_stats = parser.get_stats()
+        self.stats['ast_nodes'] = len(program.statements)
+        self.stats['functions'] = ast_stats['functions']
+        self.logger.info(f"Nós AST: {self.stats['ast_nodes']}")
+        self.logger.info(f"Funções: {ast_stats['functions']}")
+        
+        self.logger.compile_step(3, 4, "Gerando código C")
+        
+        # Gera código C
+        c_code = self._generate_c(program, source_file)
+        c_file = f"{self.output}.c"
+        
+        try:
+            with open(c_file, 'w', encoding='utf-8') as f:
+                f.write(c_code)
+        except PermissionError:
+            self.logger.error(f"Sem permissão para escrever: {c_file}")
+            return False
+        
+        self.logger.info(f"Código C gerado: {c_file}")
+        
+        if c_only:
+            self.logger.success("Geração de C concluída!")
+            return True
+        
+        self.logger.compile_step(4, 4, "Compilando binário")
+        
+        # Compila binário
+        success = self._compile_binary(c_file)
+        
+        self.stats['compile_time'] = time.time() - start_time
+        self.logger.timing("Tempo total de compilação", self.stats['compile_time'])
+        
+        if success:
+            try:
+                size = os.path.getsize(self.output)
+                self.logger.success(f"Compilação bem-sucedida! ({size:,} bytes)")
+            except:
+                self.logger.success("Compilação bem-sucedida!")
+        else:
+            self.logger.error("Falha na compilação")
+        
+        return success
+    
+    def _default_output(self, source_file: str) -> str:
+        """Gera nome de saída padrão"""
+        path = Path(source_file)
+        return str(path.with_suffix(''))
+    
+    def _generate_c(self, program: Program, filename: str) -> str:
+        """Gera código C a partir do programa"""
+        lines = []
+        lines.append(f'/* Generated by CLX v4.0 from {filename} */')
+        lines.append('#include <stdio.h>')
+        lines.append('#include <stdlib.h>')
+        lines.append('#include <string.h>')
+        lines.append('#include <stdbool.h>')
+        lines.append('#include <math.h>')
+        lines.append('')
+        lines.append('/* ULX Runtime */')
+        lines.append('typedef struct { char* data; size_t len; } ULXString;')
+        lines.append('typedef struct { void** data; size_t len; size_t cap; } ULXArray;')
+        lines.append('')
+        lines.append('#pragma GCC optimize("O3")')
+        lines.append('')
+        
+        # Gera declarações de funções primeiro
+        func_decls = []
+        for stmt in program.statements:
+            if isinstance(stmt, FunctionDef):
+                params = ", ".join("double " + p['name'] for p in stmt.params)
+                func_decls.append(f"double {stmt.name}({params});")
+        
+        if func_decls:
+            lines.append("/* Function declarations */")
+            lines.extend(func_decls)
+            lines.append("")
+        
+        # Gera funções
+        for stmt in program.statements:
+            if isinstance(stmt, FunctionDef):
+                lines.extend(self._generate_function(stmt))
+                lines.append("")
+        
+        # Gera main
+        lines.append("int main(int argc, char* argv[]) {")
+        lines.append("    (void)argc; (void)argv; /* suppress warnings */")
+        
+        for stmt in program.statements:
+            if not isinstance(stmt, FunctionDef):
+                code = self._generate_statement(stmt, indent=1)
+                if code:
+                    lines.append(code)
+        
+        lines.append("    return 0;")
+        lines.append("}")
+        
+        return '\n'.join(lines)
+    
+    def _generate_function(self, func: FunctionDef) -> List[str]:
+        """Gera código C para uma função"""
+        lines = []
+        params = ", ".join("double " + p['name'] for p in func.params)
+        lines.append(f"double {func.name}({params}) {{")
+        
+        for stmt in func.body:
+            code = self._generate_statement(stmt, indent=1)
+            if code:
+                lines.append(code)
+        
+        # Default return
+        lines.append("    return 0;")
+        lines.append("}")
+        return lines
+    
+    def _generate_statement(self, stmt, indent: int = 0) -> str:
+        """Gera código C para uma instrução"""
+        prefix = "    " * indent
+        
+        stmt_type = type(stmt).__name__
+        
+        if stmt_type == 'PrintStmt':
+            # Gera printf
+            formats = []
+            values = []
+            for arg in stmt.args:
+                if hasattr(arg, 'value') and isinstance(arg.value, str):
+                    formats.append("%s")
+                    values.append(f'"{arg.value}"')
+                else:
+                    formats.append("%g")
+                    values.append(self._generate_expr(arg))
+            
+            fmt = " ".join(formats) + "\\n"
+            vals = ", ".join(values)
+            return f'{prefix}printf("{fmt}"{", " + vals if vals else ""});'
+        
+        elif stmt_type == 'Assignment':
+            val = self._generate_expr(stmt.value)
+            return f'{prefix}double {stmt.name} = {val};'
+        
+        elif stmt_type == 'IfStmt':
+            cond = self._generate_expr(stmt.condition)
+            lines = [f'{prefix}if ({cond}) {{']
+            for s in stmt.then_body:
+                code = self._generate_statement(s, indent + 1)
+                if code:
+                    lines.append(code)
+            lines.append(f'{prefix}}}')
+            
+            if stmt.else_body:
+                lines.append(f'{prefix}else {{')
+                for s in stmt.else_body:
+                    code = self._generate_statement(s, indent + 1)
+                    if code:
+                        lines.append(code)
+                lines.append(f'{prefix}}}')
+            
+            return '\n'.join(lines)
+        
+        elif stmt_type == 'WhileStmt':
+            cond = self._generate_expr(stmt.condition)
+            lines = [f'{prefix}while ({cond}) {{']
+            for s in stmt.body:
+                code = self._generate_statement(s, indent + 1)
+                if code:
+                    lines.append(code)
+            lines.append(f'{prefix}}}')
+            return '\n'.join(lines)
+        
+        elif stmt_type == 'ForStmt':
+            init = self._generate_expr(stmt.init) if stmt.init else ""
+            cond = self._generate_expr(stmt.condition) if stmt.condition else "1"
+            inc = self._generate_expr(stmt.increment) if stmt.increment else ""
+            
+            lines = [f'{prefix}for ({init}; {cond}; {inc}) {{']
+            for s in stmt.body:
+                code = self._generate_statement(s, indent + 1)
+                if code:
+                    lines.append(code)
+            lines.append(f'{prefix}}}')
+            return '\n'.join(lines)
+        
+        elif stmt_type == 'ReturnStmt':
+            if stmt.value:
+                val = self._generate_expr(stmt.value)
+                return f'{prefix}return {val};'
+            return f'{prefix}return 0;'
+        
+        elif stmt_type == 'FunctionCall':
+            expr = self._generate_expr(stmt)
+            return f'{prefix}{expr};'
+        
+        elif stmt_type == 'BreakStmt':
+            return f'{prefix}break;'
+        
+        elif stmt_type == 'ContinueStmt':
+            return f'{prefix}continue;'
+        
+        elif stmt_type == 'BinaryOp':
+            expr = self._generate_expr(stmt)
+            return f'{prefix}{expr};'
+        
+        elif stmt_type == 'UnaryOp':
+            expr = self._generate_expr(stmt)
+            return f'{prefix}{expr};'
+        
+        elif stmt_type == 'NumberLiteral':
+            return f'{prefix}{stmt.value};'
+        
+        elif stmt_type == 'StringLiteral':
+            return f'{prefix}"{stmt.value}";'
+        
+        return None
+    
+    def _generate_expr(self, expr) -> str:
+        """Gera expressão C"""
+        expr_type = type(expr).__name__
+        
+        if expr_type == 'NumberLiteral':
+            return str(expr.value)
+        
+        elif expr_type == 'StringLiteral':
+            return f'"{expr.value}"'
+        
+        elif expr_type == 'BooleanLiteral':
+            return "1" if expr.value else "0"
+        
+        elif expr_type == 'Identifier':
+            return expr.name
+        
+        elif expr_type == 'BinaryOp':
+            left = self._generate_expr(expr.left)
+            right = self._generate_expr(expr.right)
+            
+            op_map = {
+                '+': '+', '-': '-', '*': '*', '/': '/',
+                '%': '%', '^': 'pow',
+                '==': '==', '!=': '!=',
+                '>': '>', '<': '<', '>=': '>=', '<=': '<=',
+                '&&': '&&', '||': '||',
+            }
+            
+            op = op_map.get(expr.operator, expr.operator)
+            if op == 'pow':
+                return f"pow({left}, {right})"
+            return f"({left} {op} {right})"
+        
+        elif expr_type == 'UnaryOp':
+            operand = self._generate_expr(expr.operand)
+            if expr.operator == '++':
+                return f"(++{operand})"
+            elif expr.operator == '--':
+                return f"(--{operand})"
+            return f"({expr.operator}{operand})"
+        
+        elif expr_type == 'FunctionCall':
+            args = ", ".join(self._generate_expr(a) for a in expr.args)
+            return f"{expr.name}({args})"
+        
+        return "0"
+    
+    def _compile_binary(self, c_file: str) -> bool:
+        """Compila código C para binário"""
+        cc = self._detect_compiler()
+        
+        if not cc:
+            self.logger.error("Nenhum compilador C encontrado. Instale GCC ou Clang.")
+            self.logger.info("  Ubuntu/Debian: sudo apt install gcc")
+            self.logger.info("  macOS: xcode-select --install")
+            self.logger.info("  Windows: Instale MinGW ou MSVC")
+            return False
+        
+        flags = ['-O2', '-Wall', '-Wextra', '-lm']
+        
+        if self.target == 'windows':
+            flags.append('-mwindows')
+        elif self.target == 'linux':
+            flags.extend(['-no-pie', '-static-libgcc'])
+        elif self.target == 'macos':
+            flags.append('-mmacosx-version-min=10.14')
+        
+        cmd = [cc, c_file, '-o', self.output] + flags
+        
+        self.logger.info(f"Comando: {' '.join(cmd)}")
+        
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            
+            if result.returncode != 0:
+                self.logger.error("Erros de compilação:")
+                for line in result.stderr.split('\n')[:20]:
+                    if line.strip():
+                        self.logger.error(f"  {line}")
+                return False
+            
+            if result.stderr:
+                self.logger.warning("Avisos de compilação:")
+                for line in result.stderr.split('\n')[:10]:
+                    if line.strip():
+                        self.logger.warning(f"  {line}")
+            
+            return True
+            
+        except subprocess.TimeoutExpired:
+            self.logger.error("Timeout na compilação")
+            return False
+        except FileNotFoundError:
+            self.logger.error(f"Compilador não encontrado: {cc}")
+            return False
+        except Exception as e:
+            self.logger.error(f"Erro na compilação: {e}")
+            return False
+    
+    def _detect_compiler(self) -> Optional[str]:
+        """Detecta compilador C disponível"""
+        compilers = ['gcc', 'clang', 'cc']
+        
+        for cc in compilers:
+            try:
+                result = subprocess.run([cc, '--version'], 
+                                      capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    self.logger.info(f"Compilador detectado: {cc}")
+                    return cc
+            except:
+                continue
+        
+        return None
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Retorna estatísticas da compilação"""
+        return self.stats.copy()
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='CLX Compiler v4.0 - Compilador Universal ULX',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Exemplos:
+  python clx_compiler_v2.py programa.ulx
+  python clx_compiler_v2.py programa.ulx -o app
+  python clx_compiler_v2.py programa.ulx -c  # Gera apenas C
+  python clx_compiler_v2.py programa.ulx -v  # Verbose
+        '''
+    )
+    
+    parser.add_argument('source', help='Arquivo ULX/ULV de entrada')
+    parser.add_argument('-o', '--output', help='Nome do binário de saída')
+    parser.add_argument('-c', '--c-only', action='store_true',
+                       help='Gera apenas código C')
+    parser.add_argument('-t', '--target', default='native',
+                       choices=['native', 'windows', 'linux', 'macos'],
+                       help='Plataforma alvo')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                       help='Modo verbose')
+    parser.add_argument('--version', action='version', version='CLX Compiler v4.0')
+    
+    args = parser.parse_args()
+    
+    compiler = CLXCompiler(verbose=args.verbose, target=args.target)
+    success = compiler.compile_file(args.source, args.output, args.c_only)
+    
+    sys.exit(0 if success else 1)
+
+
+if __name__ == '__main__':
+    main()

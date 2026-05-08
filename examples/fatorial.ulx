@@ -1,0 +1,13 @@
+// Cálculo de fatorial usando recursão
+escreva("=== Fatorial ===")
+
+funcao fatorial(n) {
+    se (n <= 1) {
+        retorna 1
+    }
+    retorna n * fatorial(n - 1)
+}
+
+para (i = 1; i <= 10; i = i + 1) {
+    escreva(i, "! =", fatorial(i))
+}

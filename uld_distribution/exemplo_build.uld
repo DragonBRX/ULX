@@ -1,0 +1,31 @@
+{
+    "project": "calculadora_ulx",
+    "version": "1.0.0",
+    "description": "Calculadora simples em ULX",
+
+    "target": "windows",
+
+    "output": {
+        "name": "CalculadoraULX",
+        "extension": ".exe",
+        "icon": "assets/icon.ico",
+        "version": "1.0.0"
+    },
+
+    "sources": [
+        "exemplo_build.ulx"
+    ],
+
+    "build": {
+        "optimize": true,
+        "minify": false,
+        "debug": false,
+        "strip": true
+    },
+
+    "metadata": {
+        "author": "ULX Team",
+        "license": "MIT",
+        "description": "Calculadora ULX"
+    }
+}

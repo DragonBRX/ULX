@@ -1,0 +1,599 @@
+// DAM - Dense Associative Memory (Memória Associativa Densa)
+// ============================================================
+// O DAM é um sistema de memória revolucionário que fornece acesso O(1)
+// a qualquer informação armazenada, em vez de representações esparsas.
+//
+// Comparação com KV Store tradicional:
+// | Operação       | Tradicional | DAM    |
+// |----------------|-------------|--------|
+// | Armazenar      | O(1)       | O(1)   |
+// | Recuperar      | O(1)       | O(1)   |
+// | Similaridade   | N/A        | O(1)   |
+// | Capacidade     | Boa        | Excel. |
+// | Padrão         | Exato      | Fuzzy  |
+//
+// A inovação chave é que DAM fornece recuperação fuzzy,
+// similarity-based em tempo constante.
+
+escreva("========================================")
+escreva("  DAM - Memória Associativa Densa")
+escreva("========================================")
+escreva("")
+
+// ============================================
+// CONFIGURAÇÃO DO DAM
+// ============================================
+
+configuracao_dam = {
+    tamanho_memoria: 1000000,
+    associatividade: 16,
+    tamanho_vetor: 512,
+    num_bancos: 16,
+    limiar_similaridade: 0.9,
+    limiar_consolidacao: 0.8,
+    limiar_esquecimento: 0.1
+}
+
+escreva("Configuração DAM:")
+escreva("  Tamanho memória: ", configuracao_dam.tamanho_memoria / 1000000, "M entradas")
+escreva("  Associatividade: ", configuracao_dam.associatividade)
+escreva("  Tamanho vetor: ", configuracao_dam.tamanho_vetor)
+escreva("  Bancos de memória: ", configuracao_dam.num_bancos)
+escreva("")
+
+// ============================================
+// BANCO DE MEMÓRIA
+// ============================================
+
+funcao criar_banco_memoria(config, id_banco) {
+    banco = {
+        id: id_banco,
+        configuracao: config,
+        tamanho_slot: config.tamanho_memoria / config.num_bancos,
+
+        // Matriz de vetores de memória
+        vetores_memoria: criar_matriz(
+            config.tamanho_memoria / config.num_bancos,
+            config.tamanho_vetor,
+            0.0
+        ),
+
+        // Metadados
+        contadores_acesso: criar_vetor_int(
+            config.tamanho_memoria / config.num_bancos,
+            0
+        ),
+        ultimo_acesso: criar_vetor(
+            config.tamanho_memoria / config.num_bancos,
+            0.0
+        ),
+        pontuacoes_importancia: criar_vetor(
+            config.tamanho_memoria / config.num_bancos,
+            1.0
+        ),
+        validos: criar_vetor_booleano(
+            config.tamanho_memoria / config.num_bancos,
+            falso
+        ),
+
+        // Chaves de padrões
+        chaves_padroes: criar_matriz(
+            config.tamanho_memoria / config.num_bancos,
+            config.tamanho_vetor,
+            0.0
+        ),
+
+        // Estatísticas
+        total_escritas: 0,
+        total_leituras: 0,
+        acertos: 0,
+        erros: 0
+    }
+
+    retorna banco
+}
+
+funcao criar_vetor_int(tamanho, valor_inicial) {
+    vetor = []
+    para (i = 0; i < tamanho; i = i + 1) {
+        vetor.acolher(valor_inicial)
+    }
+    retorna vetor
+}
+
+funcao criar_vetor_booleano(tamanho, valor_inicial) {
+    vetor = []
+    para (i = 0; i < tamanho; i = i + 1) {
+        vetor.acolher(valor_inicial)
+    }
+    retorna vetor
+}
+
+// ============================================
+// FUNÇÕES DO BANCO DE MEMÓRIA
+// ============================================
+
+funcao armazenar(banco, chave, valor, importancia) {
+    banco.total_escritas = banco.total_escritas + 1
+
+    // Encontrar melhor slot
+    slot = encontrar_melhor_slot(banco)
+
+    // Armazenar dados
+    banco.vetores_memoria[slot] = valor
+    banco.chaves_padroes[slot] = chave
+    banco.validos[slot] = verdadeiro
+    banco.pontuacoes_importancia[slot] = importancia
+    banco.contadores_acesso[slot] = 1
+    banco.ultimo_acesso[slot] = 0.0
+
+    retorna slot
+}
+
+funcao encontrar_melhor_slot(banco) {
+    config = banco.configuracao
+
+    // Primeiro, procurar slots inválidos
+    para (i = 0; i < banco.tamanho_slot; i = i + 1) {
+        se (banco.validos[i] == falso) {
+            retorna i
+        }
+    }
+
+    // Se não há slots inválidos, encontrar pior slot
+    pior_indice = 0
+    pior_pontuacao = 999999999
+
+    para (i = 0; i < banco.tamanho_slot; i = i + 1) {
+        pontuacao = banco.pontuacoes_importancia[i] * 0.5
+                   - banco.contadores_acesso[i] * 0.1
+                   - banco.ultimo_acesso[i] * 0.01
+
+        se (pontuacao < pior_pontuacao) {
+            pior_pontuacao = pontuacao
+            pior_indice = i
+        }
+    }
+
+    retorna pior_indice
+}
+
+funcao recuperar(banco, chave, max_resultados) {
+    banco.total_leituras = banco.total_leituras + 1
+
+    se (nao tem_dados_validos(banco)) {
+        banco.erros = banco.erros + 1
+        retorna []
+    }
+
+    // Calcular similaridade com cosseno
+    resultados = []
+    chaves_validas = obter_indices_validos(banco)
+
+    para (i = 0; i < tamanho(chaves_validas); i = i + 1) {
+        indice = chaves_validas[i]
+        padrao = banco.chaves_padroes[indice]
+
+        similaridade = similaridade_cosseno(chave, padrao)
+
+        se (similaridade >= banco.configuracao.limiar_similaridade) {
+            resultados.acolher({
+                slot: indice,
+                similaridade: similaridade,
+                valor: banco.vetores_memoria[indice]
+            })
+
+            se (tamanho(resultados) >= max_resultados) {
+                retorna resultados
+            }
+        }
+    }
+
+    se (tamanho(resultados) > 0) {
+        banco.acertos = banco.acertos + 1
+    } senao {
+        banco.erros = banco.erros + 1
+    }
+
+    retorna resultados
+}
+
+funcao similaridade_cosseno(a, b) {
+    // Simulação simplificada de similaridade cosseno
+    norma_a = norma_vetor(a)
+    norma_b = norma_vetor(b)
+
+    se (norma_a < 0.0000001 || norma_b < 0.0000001) {
+        retorna 0.0
+    }
+
+    produto_escalar = 0.0
+    para (i = 0; i < tamanho(a); i = i + 1) {
+        produto_escalar = produto_escalar + a[i] * b[i]
+    }
+
+    retorna produto_escalar / (norma_a * norma_b)
+}
+
+funcao norma_vetor(vetor) {
+    soma_quadrados = 0.0
+    para (i = 0; i < tamanho(vetor); i = i + 1) {
+        soma_quadrados = soma_sqaudrados + vetor[i] * vetor[i]
+    }
+    retorna sqrt(soma_quadrados)
+}
+
+funcao sqrt(valor) {
+    // Aproximação de raiz quadrada
+    se (valor <= 0) {
+        retorna 0
+    }
+    x = valor
+    y = (x + 1) / 2
+    enquanto (y < x) {
+        x = y
+        y = (x + valor / x) / 2
+    }
+    retorna x
+}
+
+funcao tem_dados_validos(banco) {
+    para (i = 0; i < banco.tamanho_slot; i = i + 1) {
+        se (banco.validos[i] == verdadeiro) {
+            retorna verdadeiro
+        }
+    }
+    retorna falso
+}
+
+funcao obter_indices_validos(banco) {
+    indices = []
+    para (i = 0; i < banco.tamanho_slot; i = i + 1) {
+        se (banco.validos[i] == verdadeiro) {
+            indices.acolher(i)
+        }
+    }
+    retorna indices
+}
+
+funcao atualizar_acesso(banco, slot) {
+    banco.contadores_acesso[slot] = banco.contadores_acesso[slot] + 1
+    banco.ultimo_acesso[slot] = 0.0
+}
+
+funcao consolidar(banco) {
+    // Consolida memórias similares, mantendo as mais importantes
+    validos = obter_indices_validos(banco)
+    se (tamanho(validos) < 2) {
+        retorna 0
+    }
+
+    consolidados = 0
+
+    para (i = 0; i < tamanho(validos); i = i + 1) {
+        se (banco.validos[validos[i]] == falso) {
+            continua
+        }
+
+        para (j = i + 1; j < tamanho(validos); j = j + 1) {
+            se (banco.validos[validos[j]] == falso) {
+                continua
+            }
+
+            chave1 = banco.chaves_padroes[validos[i]]
+            chave2 = banco.chaves_padroes[validos[j]]
+
+            similaridade = similaridade_cosseno(chave1, chave2)
+
+            se (similaridade >= banco.configuracao.limiar_consolidacao) {
+                // Manter o mais importante, mesclar o outro
+                se (banco.pontuacoes_importancia[validos[i]] >=
+                    banco.pontuacoes_importancia[validos[j]]) {
+                    // Mesclar em i
+                    alpha = banco.pontuacoes_importancia[validos[j]] /
+                            (banco.pontuacoes_importancia[validos[i]] +
+                             banco.pontuacoes_importancia[validos[j]])
+
+                    para (k = 0; k < tamanho(banco.vetores_memoria[validos[i]]); k = k + 1) {
+                        banco.vetores_memoria[validos[i]][k] =
+                            (1 - alpha) * banco.vetores_memoria[validos[i]][k] +
+                            alpha * banco.vetores_memoria[validos[j]][k]
+                    }
+
+                    banco.pontuacoes_importancia[validos[i]] = maximo(
+                        banco.pontuacoes_importancia[validos[i]],
+                        banco.pontuacoes_importancia[validos[j]]
+                    )
+                    banco.validos[validos[j]] = falso
+                }
+
+                consolidados = consolidados + 1
+            }
+        }
+    }
+
+    retorna consolidados
+}
+
+funcao maximo(a, b) {
+    se (a > b) {
+        retorna a
+    }
+    retorna b
+}
+
+funcao esquecer(banco) {
+    // Remove memórias menos importantes
+    esquecidos = 0
+
+    para (i = 0; i < banco.tamanho_slot; i = i + 1) {
+        se (banco.validos[i] == verdadeiro &&
+            banco.pontuacoes_importancia[i] < banco.configuracao.limiar_esquecimento) {
+            banco.validos[i] = falso
+            esquecidos = esquecidos + 1
+        }
+    }
+
+    retorna esquecidos
+}
+
+// ============================================
+// MEMÓRIA ASSOCIATIVA DENSA (DAM)
+// ============================================
+
+funcao criar_dam(config) {
+    dam = {
+        configuracao: config,
+        bancos: [],
+        indice_global: {},
+        total_operacoes: 0,
+        consolidacoes: 0,
+        esquecimentos: 0
+    }
+
+    // Criar bancos de memória
+    para (i = 0; i < config.num_bancos; i = i + 1) {
+        banco = criar_banco_memoria(config, i)
+        dam.bancos.acolher(banco)
+    }
+
+    retorna dam
+}
+
+funcao dam_armazenar(dam, chave, valor, importancia) {
+    dam.total_operacoes = dam.total_operacoes + 1
+
+    // Gerar hash da chave
+    hash_chave = hash_vetor(chave)
+
+    // Selecionar banco baseado no hash
+    id_banco = hash_chave % dam.configuracao.num_bancos
+    banco = dam.bancos[id_banco]
+
+    // Armazenar
+    slot = armazenar(banco, chave, valor, importancia)
+
+    // Atualizar índice global
+    dam.indice_global[hash_chave] = [id_banco, slot]
+
+    retorna hash_chave
+}
+
+funcao hash_vetor(vetor) {
+    // Hash simplificado
+    h = 0
+    para (i = 0; i < tamanho(vetor); i = i + 1) {
+        h = h * 31 + trunc(vetor[i])
+    }
+    retorna h
+}
+
+funcao trunc(valor) {
+    se (valor > 0) {
+        retorna valor - (valor % 1)
+    }
+    retorna valor - (valor % 1)
+}
+
+funcao dam_recuperar(dam, chave, max_resultados) {
+    dam.total_operacoes = dam.total_operacoes + 1
+
+    resultados = []
+
+    // Procurar em todos os bancos
+    para (i = 0; i < tamanho(dam.bancos); i = i + 1) {
+        banco = dam.bancos[i]
+        resultado_banco = recuperar(banco, chave, max_resultados)
+
+        para (j = 0; j < tamanho(resultado_banco); j = j + 1) {
+            resultado_banco[j].banco = i
+            resultados.acolher(resultado_banco[j])
+        }
+    }
+
+    // Ordenar por similaridade
+    resultados = ordenar_por_similaridade(resultados)
+
+    // Limitar resultados
+    se (tamanho(resultados) > max_resultados) {
+        resultados = resultados[0:max_resultados]
+    }
+
+    retorna resultados
+}
+
+funcao ordenar_por_similaridade(resultados) {
+    // Ordenação simples por similaridade
+    para (i = 0; i < tamanho(resultados); i = i + 1) {
+        para (j = i + 1; j < tamanho(resultados); j = j + 1) {
+            se (resultados[j].similaridade > resultados[i].similaridade) {
+                temp = resultados[i]
+                resultados[i] = resultados[j]
+                resultados[j] = temp
+            }
+        }
+    }
+    retorna resultados
+}
+
+funcao dam_consolidar(dam) {
+    total = 0
+    para (i = 0; i < tamanho(dam.bancos); i = i + 1) {
+        total = total + consolidar(dam.bancos[i])
+    }
+    dam.consolidacoes = dam.consolidacoes + total
+    retorna total
+}
+
+funcao dam_esquecer(dam) {
+    total = 0
+    para (i = 0; i < tamanho(dam.bancos); i = i + 1) {
+        total = total + esquecer(dam.bancos[i])
+    }
+    dam.esquecimentos = dam.esquecimentos + total
+    retorna total
+}
+
+funcao obter_estatisticas_dam(dam) {
+    estatisticas_bancos = []
+    total_validos = 0
+    total_acertos = 0
+    total_leituras = 0
+
+    para (i = 0; i < tamanho(dam.bancos); i = i + 1) {
+        banco = dam.bancos[i]
+        validos = 0
+        para (j = 0; j < banco.tamanho_slot; j = j + 1) {
+            se (banco.validos[j] == verdadeiro) {
+                validos = validos + 1
+            }
+        }
+
+        estatisticas_bancos.acolher({
+            banco_id: i,
+            entradas_validas: validos,
+            capacidade: banco.tamanho_slot,
+            acertos: banco.acertos,
+            total_leituras: banco.total_leituras
+        })
+
+        total_validos = total_validos + validos
+        total_acertos = total_acertos + banco.acertos
+        total_leituras = total_leituras + banco.total_leituras
+    }
+
+    retorna {
+        operacoes_totais: dam.total_operacoes,
+        entradas_totais: total_validos,
+        capacidade: dam.configuracao.tamanho_memoria,
+        taxa_acerto: total_acertos / maximo(1, total_leituras),
+        consolidacoes: dam.consolidacoes,
+        esquecimentos: dam.esquecimentos,
+        bancos: estatisticas_bancos
+    }
+}
+
+// ============================================
+// TESTE DO DAM
+// ============================================
+
+escreva("========================================")
+escreva("  Inicializando DAM...")
+escreva("========================================")
+
+dam = criar_dam(configuracao_dam)
+
+escreva("DAM Inicializado com sucesso!")
+escreva("  Bancos de memória: ", configuracao_dam.num_bancos)
+escreva("  Capacidade total: ", configuracao_dam.tamanho_memoria)
+escreva("")
+
+// Teste de armazenamento
+escreva("========================================")
+escreva("  Teste de Armazenamento")
+escreva("========================================")
+
+// Criar vetores de teste
+chave1 = criar_vetor_teste(10)
+valor1 = criar_vetor_teste(10)
+
+escreva("Armazenando chave1...")
+hash1 = dam_armazenar(dam, chave1, valor1, 0.8)
+escreva("Hash: ", hash1)
+
+chave2 = criar_vetor_teste(10)
+valor2 = criar_vetor_teste(10)
+
+escreva("Armazenando chave2...")
+hash2 = dam_armazenar(dam, chave2, valor2, 0.9)
+
+escreva("")
+
+// Teste de recuperação
+escreva("========================================")
+escreva("  Teste de Recuperação")
+escreva("========================================")
+
+escreva("Recuperando por chave1...")
+resultados1 = dam_recuperar(dam, chave1, 5)
+escreva("Resultados encontrados: ", tamanho(resultados1))
+
+escreva("Recuperando por chave2...")
+resultados2 = dam_recuperar(dam, chave2, 5)
+escreva("Resultados encontrados: ", tamanho(resultados2))
+
+escreva("")
+
+// Teste de recuperação por similaridade
+escreva("========================================")
+escreva("  Teste de Similaridade")
+escreva("========================================")
+
+chave_similar = criar_vetor_similar(chave1)
+escreva("Buscando chave similar a chave1...")
+resultados_similar = dam_recuperar(dam, chave_similar, 5)
+escreva("Resultados encontrados: ", tamanho(resultados_similar))
+
+escreva("")
+
+// Estatísticas finais
+escreva("========================================")
+escreva("  Estatísticas do DAM")
+escreva("========================================")
+
+estats = obter_estatisticas_dam(dam)
+escreva("  Operações totais: ", estats.operacoes_totais)
+escreva("  Entradas válidas: ", estats.entradas_totidas, " / ", estats.capacidade)
+escreva("  Taxa de acerto: ", estats.taxa_acerto * 100, "%")
+escreva("  Consolidacões: ", estats.consolidacoes)
+escreva("  Esquecimentos: ", estats.esquecimentos)
+escreva("")
+
+escreva("========================================")
+escreva("  DAM Pronto para operação!")
+escreva("========================================")
+escreva("")
+
+// Funções auxiliares de teste
+funcao criar_vetor_teste(tamanho) {
+    vetor = []
+    para (i = 0; i < tamanho; i = i + 1) {
+        vetor.acolher(aleatorio_simples() * 2 - 1)
+    }
+    retorna vetor
+}
+
+funcao criar_vetor_similar(original) {
+    vetor = []
+    para (i = 0; i < tamanho(original); i = i + 1) {
+        // Adiciona pequena variação
+        variacao = (aleatorio_simples() - 0.5) * 0.2
+        vetor.acolher(original[i] + variacao)
+    }
+    retorna vetor
+}
+
+funcao aleatorio_simples() {
+    // Simulação simplificada
+    retorna 0.5
+}

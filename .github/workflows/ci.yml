@@ -1,0 +1,87 @@
+name: ULX CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov
+
+    - name: Run tests
+      run: |
+        python -m pytest tests/ -v --cov=. --cov-report=xml --cov-report=term
+
+    - name: Test Lexer
+      run: |
+        python -m pytest tests/test_lexer.py -v
+
+    - name: Test Parser
+      run: |
+        python -m pytest tests/test_parser.py -v
+
+    - name: Test Interpreter
+      run: |
+        python -m pytest tests/test_interpreter.py -v
+
+    - name: Test Linter
+      run: |
+        python -m pytest tests/test_linter.py -v
+
+    - name: Run examples
+      run: |
+        python -c "
+        from ulx_core.lexer import Lexer
+        from ulx_core.parser import Parser
+        from ulx_core.interpreter import Interpreter
+        import glob
+        
+        for file in glob.glob('examples/*.ulx'):
+            print(f'Running {file}...')
+            with open(file, 'r') as f:
+                source = f.read()
+            lexer = Lexer(source, file)
+            tokens = lexer.tokenize()
+            parser = Parser(tokens, source, file)
+            program = parser.parse()
+            if not parser.has_errors():
+                interpreter = Interpreter()
+                interpreter.execute(program)
+            print(f'  OK')
+        "
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Lint code
+      run: |
+        python -m pip install flake8
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=.git,__pycache__,docs

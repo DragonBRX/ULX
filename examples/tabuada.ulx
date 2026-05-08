@@ -1,0 +1,22 @@
+// Tabuada - ULX v3.0
+// Gera tabuada de multiplicação
+
+escreva("================================")
+escreva("  Tabuada de Multiplicação")
+escreva("================================")
+escreva("")
+
+escreva("Digite um número:")
+num = leia()
+
+escreva("")
+escreva("Tabuada de ", num, ":")
+escreva("----------------")
+
+para (i = 1; i <= 10; i = i + 1) {
+    resultado = num * i
+    escreva(num, " x ", i, " = ", resultado)
+}
+
+escreva("")
+escreva("================================")
